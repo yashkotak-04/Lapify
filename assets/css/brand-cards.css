@@ -1,0 +1,686 @@
+/* ============================================================
+   Lapify Brand Cards — Glassmorphism & Luxury Dark Slate System
+   Frosted glass backdrop blur, high-contrast white text, smooth glow transitions.
+   ============================================================ */
+
+:root {
+  --card-grad: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 249, 255, 0.98) 50%, rgba(224, 242, 254, 0.98) 100%);
+  --card-text: #0f172a;
+  --card-text-muted: #475569;
+  --card-accent-gold: #fbbf24;
+  --card-accent-cyan: #0284c7;
+  --card-border: rgba(56, 189, 248, 0.45);
+  --card-shadow: 0 16px 40px rgba(2, 6, 23, 0.1), 0 0 25px rgba(56, 189, 248, 0.2);
+  --card-shadow-hover: 0 25px 60px rgba(2, 6, 23, 0.18), 0 0 35px rgba(56, 189, 248, 0.45);
+  --hero-tag-bg: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  --hero-tag-color: #ffffff;
+}
+
+body:not([data-theme="dark"]) {
+  --card-grad: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 249, 255, 0.98) 50%, rgba(224, 242, 254, 0.98) 100%);
+  --card-border: rgba(56, 189, 248, 0.45);
+  --card-text: #0f172a;
+  --card-text-muted: #475569;
+}
+
+[data-theme="dark"] {
+  --card-grad: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 50%, rgba(15, 23, 42, 0.95) 100%);
+  --card-border: rgba(56, 189, 248, 0.35);
+  --card-text: #ffffff;
+  --card-text-muted: #cbd5e1;
+  --card-shadow: 0 20px 50px rgba(2, 6, 23, 0.65), 0 0 25px rgba(56, 189, 248, 0.2);
+  --card-shadow-hover: 0 28px 70px rgba(2, 6, 23, 0.8), 0 0 40px rgba(56, 189, 248, 0.45);
+}
+
+body:not([data-theme="dark"]) .card,
+body:not([data-theme="dark"]) .card *,
+body:not([data-theme="dark"]) .card-laptop,
+body:not([data-theme="dark"]) .card-laptop *,
+body:not([data-theme="dark"]) .checkout-card,
+body:not([data-theme="dark"]) .checkout-card *,
+body:not([data-theme="dark"]) .order-card,
+body:not([data-theme="dark"]) .order-card *,
+body:not([data-theme="dark"]) .stat-card,
+body:not([data-theme="dark"]) .stat-card *,
+body:not([data-theme="dark"]) .brand-card,
+body:not([data-theme="dark"]) .brand-card * {
+  color: #0f172a;
+}
+
+body:not([data-theme="dark"]) .card .text-muted,
+body:not([data-theme="dark"]) .card .text-secondary,
+body:not([data-theme="dark"]) .card-laptop .text-muted,
+body:not([data-theme="dark"]) .card-laptop .text-secondary,
+body:not([data-theme="dark"]) .checkout-card .checkout-sub,
+body:not([data-theme="dark"]) .order-card .text-muted {
+  color: #475569 !important;
+}
+
+body:not([data-theme="dark"]) .card .text-primary,
+body:not([data-theme="dark"]) .card-laptop .price {
+  color: #2563eb !important;
+}
+
+/* Glassmorphism Frosted Blur for All Cards */
+.card,
+.card-laptop,
+.custom-card,
+.stat-card,
+.dashboard-hero-card,
+.hero-summary-card,
+.dashboard-quick-actions-card,
+.dashboard-recent-card,
+.order-card,
+.order-track-card,
+.order-items-card,
+.checkout-card,
+.checkout-summary,
+.brand-card,
+.hero-section {
+  background: var(--card-grad) !important;
+  backdrop-filter: blur(10px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(160%) !important;
+  color: var(--card-text) !important;
+  border: 1px solid var(--card-border) !important;
+  box-shadow: var(--card-shadow) !important;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease !important;
+  backface-visibility: hidden !important;
+  transform: translate3d(0, 0, 0);
+}
+
+.card:hover,
+.card-laptop:hover,
+.custom-card:hover,
+.stat-card:hover,
+.order-card:hover,
+.checkout-card:hover,
+.brand-card:hover {
+  transform: translate3d(0, -4px, 0) !important;
+  box-shadow: var(--card-shadow-hover) !important;
+  border-color: rgba(56, 189, 248, 0.45) !important;
+}
+
+/* Auth card hover: STABLE SMOOTH GLOW (NO JUMPING/TRANSLATE ANIMATION) */
+.auth-card:hover {
+  transform: none !important;
+  box-shadow: 0 25px 65px rgba(2, 6, 23, 0.65), 0 0 35px rgba(56, 189, 248, 0.35) !important;
+  border-color: rgba(56, 189, 248, 0.5) !important;
+}
+
+/* Sub-containers stay transparent */
+.card-body,
+.card-header,
+.card-footer,
+.card-laptop .card-body {
+  background: transparent !important;
+}
+
+/* Eliminate solid white boxes inside cards — Black Text */
+.card .bg-light,
+.card .bg-white,
+.card-laptop .bg-light,
+.card-laptop .bg-white {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+.card .bg-light *,
+.card .bg-white *,
+.card-laptop .bg-light *,
+.card-laptop .bg-white * {
+  color: #0f172a !important;
+}
+
+/* Unified Hero Section Light & Dark Contrast Gradient */
+.hero-section,
+.bg-primary.text-white.py-5 {
+  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%) !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06) !important;
+}
+
+.hero-section *,
+.bg-primary.text-white.py-5 * {
+  color: #0f172a !important;
+}
+
+/* ALL TEXT BLACK inside light cards */
+.card *,
+.card-laptop *,
+.checkout-card *,
+.order-card *,
+.stat-card *,
+.brand-card * {
+  color: #0f172a;
+}
+
+.card .text-muted,
+.card .text-secondary,
+.card-laptop .text-muted,
+.card-laptop .text-secondary,
+.checkout-card .checkout-sub,
+.order-card .text-muted,
+.stat-card .text-muted,
+.brand-card .text-muted {
+  color: #475569 !important;
+}
+
+.card .card-title,
+.card-laptop .card-title,
+.checkout-card h2,
+.order-card h6,
+.order-card .fw-bold,
+.stat-card .fw-bold,
+.brand-card .brand-name {
+  color: #0f172a !important;
+  background: transparent !important;
+}
+
+/* Card links: Electric Cyan (#38bdf8) & Gold (#fbbf24) */
+.auth-card a:not(.btn),
+.auth-link {
+  color: var(--card-accent-cyan) !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+}
+
+.auth-card a:not(.btn):hover,
+.auth-link:hover {
+  color: var(--card-accent-gold) !important;
+  text-decoration: underline !important;
+}
+
+.card a:not(.btn):not(.brand-card),
+.card-laptop a:not(.btn),
+.order-card a:not(.btn),
+.checkout-card a:not(.btn) {
+  color: var(--card-accent-cyan);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* Product card overrides */
+.card-laptop .pt-2.border-top,
+.card-laptop .border-top {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.card-laptop .price,
+.card-laptop .fw-bold.text-primary,
+.card-laptop .text-primary {
+  color: var(--card-accent-gold) !important;
+  font-weight: 800 !important;
+}
+
+.stock-badge,
+.card-laptop .stock-badge {
+  background: rgba(56, 189, 248, 0.18) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+}
+
+.stock-badge.out-of-stock,
+.card-laptop .stock-badge.out-of-stock {
+  background: rgba(239, 68, 68, 0.25) !important;
+  color: #fca5a5 !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+/* Button contrast & visibility fixes — 100% VISIBLE BY DEFAULT */
+.btn-primary,
+.card-laptop .btn-primary,
+.card-laptop .btn-product-buy {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+.btn-primary:hover,
+.card-laptop .btn-primary:hover,
+.card-laptop .btn-product-buy:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5) !important;
+}
+
+.btn-soft-primary,
+.btn-outline-primary,
+.card-laptop .btn-soft-primary,
+.card-laptop .btn-product-details,
+.card-laptop .btn-outline-primary,
+.card .btn-outline-primary {
+  background: rgba(37, 99, 235, 0.12) !important;
+  color: #2563eb !important;
+  border: 1.5px solid #2563eb !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+  transition: all 0.25s ease !important;
+}
+
+.btn-soft-primary:hover,
+.btn-outline-primary:hover,
+.card-laptop .btn-soft-primary:hover,
+.card-laptop .btn-product-details:hover,
+.card-laptop .btn-outline-primary:hover,
+.card .btn-outline-primary:hover {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4) !important;
+}
+
+.product-action-group .btn {
+  height: 38px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  border-radius: 8px !important;
+}
+
+.btn-light,
+.btn-secondary,
+.btn-outline-secondary {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border: 1.5px solid #cbd5e1 !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+.btn-light:hover,
+.btn-secondary:hover,
+.btn-outline-secondary:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+/* Micro-animations */
+.card-laptop img,
+.laptop-img-wrapper img {
+  transition: transform 0.4s ease !important;
+}
+
+.card-laptop:hover img,
+.laptop-img-wrapper:hover img {
+  transform: scale(1.06) !important;
+}
+
+.brand-card {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.brand-card:hover {
+  transform: translateY(-6px) scale(1.02) !important;
+  box-shadow: 0 20px 45px rgba(56, 189, 248, 0.35) !important;
+}
+
+/* ============================================================
+   GLOBAL SITEWIDE TEXT VISIBILITY & CONTRAST ENHANCEMENTS
+   Guarantee all text, labels, titles, inputs & badges are 100% visible
+   ============================================================ */
+
+/* High contrast headings and paragraphs — SOLID BLACK TEXT */
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6,
+.display-1, .display-2, .display-3, .display-4, .display-5, .display-6 {
+  color: #0f172a !important;
+}
+
+body {
+  color: #0f172a;
+}
+
+p, span, label, small, div, li, td, th {
+  color: inherit;
+}
+
+.text-muted,
+.text-secondary {
+  color: #475569 !important;
+}
+
+.text-dark {
+  color: #0f172a !important;
+}
+
+.text-primary {
+  color: #2563eb !important;
+}
+
+/* Badges sitewide */
+.badge {
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.badge.bg-success-subtle,
+.badge.bg-success {
+  background: rgba(34, 197, 94, 0.25) !important;
+  color: #4ade80 !important;
+  border: 1px solid rgba(74, 222, 128, 0.4) !important;
+}
+
+.badge.bg-warning-subtle,
+.badge.bg-warning {
+  background: rgba(245, 158, 11, 0.25) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(251, 191, 36, 0.4) !important;
+}
+
+.badge.bg-danger-subtle,
+.badge.bg-danger {
+  background: rgba(239, 68, 68, 0.25) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(252, 165, 165, 0.4) !important;
+}
+
+.badge.bg-primary-subtle,
+.badge.bg-primary {
+  background: rgba(37, 99, 235, 0.3) !important;
+  color: #60a5fa !important;
+  border: 1px solid rgba(96, 165, 250, 0.4) !important;
+}
+
+.badge.bg-info-subtle,
+.badge.bg-info {
+  background: rgba(14, 165, 233, 0.25) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+}
+
+.badge.bg-secondary-subtle,
+.badge.bg-secondary {
+  background: rgba(148, 163, 184, 0.25) !important;
+  color: #cbd5e1 !important;
+  border: 1px solid rgba(203, 213, 225, 0.3) !important;
+}
+
+/* Standalone inputs & select controls */
+.form-control,
+.form-select,
+textarea.form-control,
+select.form-select {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1.5px solid #cbd5e1 !important;
+  font-weight: 500 !important;
+}
+
+.form-control::placeholder,
+textarea.form-control::placeholder {
+  color: #64748b !important;
+  opacity: 1 !important;
+}
+
+.form-select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+/* Modals & Dropdown Menus — Signature Lapify Theme */
+.modal-content {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.99) 0%, rgba(240, 249, 255, 0.99) 50%, rgba(224, 242, 254, 0.99) 100%) !important;
+  color: #0f172a !important;
+  border: 1.5px solid rgba(56, 189, 248, 0.5) !important;
+  box-shadow: 0 25px 65px rgba(2, 6, 23, 0.25), 0 0 35px rgba(56, 189, 248, 0.3) !important;
+  border-radius: 22px !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+.modal-content .modal-title,
+.modal-content .modal-header h1,
+.modal-content .modal-header h2,
+.modal-content .modal-header h3,
+.modal-content .modal-header h4,
+.modal-content .modal-header h5,
+.modal-content .modal-body,
+.modal-content .form-label,
+.modal-content label,
+.modal-content .form-check-label,
+.modal-content .modal-item-title {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+.modal-content .text-muted,
+.modal-content .text-secondary {
+  color: #475569 !important;
+}
+
+.modal-content .form-control,
+.modal-content .form-select {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 12px !important;
+  padding: 0.65rem 0.9rem !important;
+  font-weight: 500 !important;
+}
+
+.modal-content .form-control:focus,
+.modal-content .form-select:focus {
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25) !important;
+}
+
+.modal-content .form-control::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+.modal-content .btn-close {
+  filter: none !important;
+  opacity: 0.75;
+}
+
+.modal-content .btn-close:hover {
+  opacity: 1;
+}
+
+/* Dark Mode Modal Overrides */
+[data-theme="dark"] .modal-content {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.98) 50%, rgba(15, 23, 42, 0.98) 100%) !important;
+  color: #ffffff !important;
+  border: 1.5px solid rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 28px 70px rgba(2, 6, 23, 0.8), 0 0 45px rgba(56, 189, 248, 0.35) !important;
+}
+
+[data-theme="dark"] .modal-content .modal-title,
+[data-theme="dark"] .modal-content .modal-header h1,
+[data-theme="dark"] .modal-content .modal-header h2,
+[data-theme="dark"] .modal-content .modal-header h3,
+[data-theme="dark"] .modal-content .modal-header h4,
+[data-theme="dark"] .modal-content .modal-header h5,
+[data-theme="dark"] .modal-content .modal-body,
+[data-theme="dark"] .modal-content .form-label,
+[data-theme="dark"] .modal-content label,
+[data-theme="dark"] .modal-content .form-check-label,
+[data-theme="dark"] .modal-content .modal-item-title {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .modal-content .text-muted,
+[data-theme="dark"] .modal-content .text-secondary {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .modal-content .form-control,
+[data-theme="dark"] .modal-content .form-select {
+  background-color: rgba(30, 41, 59, 0.9) !important;
+  color: #ffffff !important;
+  border: 1.5px solid rgba(56, 189, 248, 0.35) !important;
+}
+
+[data-theme="dark"] .modal-content .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%) !important;
+}
+
+.dropdown-menu {
+  background: rgba(30, 41, 59, 0.96) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(12px) !important;
+  color: #ffffff !important;
+}
+
+.dropdown-menu .user-menu-name,
+.dropdown-menu .fw-semibold {
+  color: #ffffff !important;
+}
+
+.dropdown-menu .user-menu-email,
+.dropdown-menu .text-muted {
+  color: rgba(226, 232, 240, 0.8) !important;
+}
+
+.dropdown-menu .dropdown-divider {
+  border-top-color: rgba(255, 255, 255, 0.2) !important;
+  opacity: 0.7;
+}
+
+.dropdown-item {
+  color: #ffffff !important;
+}
+
+.dropdown-item:hover {
+  background: rgba(37, 99, 235, 0.35) !important;
+  color: #ffffff !important;
+}
+
+/* Hero section badge and gradient text styles */
+.hero-badge-gradient {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 4px 18px rgba(37, 99, 235, 0.4) !important;
+}
+
+.hero-text-gradient {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+}
+
+/* Custom File Upload Selector Button Styling */
+input[type="file"]::file-selector-button,
+.form-control[type="file"]::file-selector-button {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  padding: 0.52rem 1.15rem !important;
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  font-size: 0.86rem !important;
+  margin-right: 0.85rem !important;
+  cursor: pointer !important;
+  transition: all 0.25s ease !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3) !important;
+}
+
+input[type="file"]::file-selector-button:hover,
+.form-control[type="file"]::file-selector-button:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #1d4ed8 100%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.45) !important;
+}
+
+[data-theme="dark"] input[type="file"]::file-selector-button,
+[data-theme="dark"] .form-control[type="file"]::file-selector-button {
+  background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+}
+
+/* ============================================================
+   User Panel Navbar Button & Nav Link Animations
+   (Matching Admin Sidebar Sky-Blue Theme & Micro-Animations 1:1)
+   ============================================================ */
+
+/* Navbar Navigation Links */
+.navbar-lapify .navbar-nav .nav-link {
+  padding: 0.65rem 1.15rem !important;
+  border-radius: 14px !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+  border: 1.5px solid transparent !important;
+}
+
+.navbar-lapify .navbar-nav .nav-link i {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.3s ease !important;
+}
+
+/* Hover State Animation */
+.navbar-lapify .navbar-nav .nav-link:hover {
+  color: #0284c7 !important;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(37, 99, 235, 0.22) 100%) !important;
+  border-color: rgba(56, 189, 248, 0.45) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.12), 0 0 20px rgba(56, 189, 248, 0.35) !important;
+}
+
+.navbar-lapify .navbar-nav .nav-link:hover i {
+  transform: scale(1.22) rotate(4deg) !important;
+  color: #0284c7 !important;
+}
+
+/* Active State Animation */
+.navbar-lapify .navbar-nav .nav-link.active {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
+  border-color: rgba(56, 189, 248, 0.8) !important;
+  font-weight: 700 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 28px rgba(2, 132, 199, 0.45), 0 0 25px rgba(56, 189, 248, 0.6) !important;
+}
+
+.navbar-lapify .navbar-nav .nav-link.active i {
+  color: #ffffff !important;
+  transform: scale(1.2) rotate(0deg) !important;
+}
+
+/* Dark Mode Navbar Link Overrides */
+[data-theme="dark"] .navbar-lapify .navbar-nav .nav-link:hover {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.22) 0%, rgba(37, 99, 235, 0.32) 100%) !important;
+  border-color: rgba(56, 189, 248, 0.6) !important;
+}
+
+/* Quick Action Icons & Buttons in User Navbar */
+.navbar-actions .btn-quick-icon,
+.navbar-actions .theme-toggle-btn,
+.navbar-actions .btn-admin-back {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 1.5px solid transparent !important;
+}
+
+.navbar-actions .btn-quick-icon:hover,
+.navbar-actions .theme-toggle-btn:hover {
+  transform: scale(1.14) translateY(-2px) !important;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(37, 99, 235, 0.3) 100%) !important;
+  border-color: rgba(56, 189, 248, 0.6) !important;
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.2), 0 0 20px rgba(56, 189, 248, 0.4) !important;
+}
+
+.navbar-actions .btn-quick-icon:hover i,
+.navbar-actions .theme-toggle-btn:hover i {
+  transform: scale(1.22) rotate(6deg) !important;
+  color: #0284c7 !important;
+}
+
+[data-theme="dark"] .navbar-actions .btn-quick-icon:hover i,
+[data-theme="dark"] .navbar-actions .theme-toggle-btn:hover i {
+  color: #38bdf8 !important;
+}
+
+.navbar-actions .btn-admin-back:hover {
+  transform: translateY(-2px) scale(1.04) !important;
+  box-shadow: 0 10px 28px rgba(2, 132, 199, 0.45), 0 0 25px rgba(56, 189, 248, 0.6) !important;
+}

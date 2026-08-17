@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Lapify Horizontal Logo — L-Mark + Wordmark (Full Color) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64" role="img" aria-labelledby="logoTitle logoDesc">
+  <title id="logoTitle">Lapify</title>
+  <desc id="logoDesc">Lapify horizontal logo: L-Mark laptop icon with wordmark</desc>
+
+  <!-- ===== Icon: The L-Mark =====
+       A rounded laptop lid in Royal Blue containing a white "L" monogram
+       (lower-left) and an Electric Cyan connectivity node (upper-right),
+       resting on a Charcoal base line with a cyan network node. -->
+  <g transform="translate(40, 8) scale(0.82)">
+    <!-- Laptop lid -->
+    <rect x="8" y="8" width="48" height="32" rx="7" fill="#2563EB"/>
+    <!-- Screen "L" monogram (negative space) -->
+    <rect x="15" y="14" width="7" height="17" rx="2" fill="#FFFFFF"/>
+    <rect x="15" y="27" width="21" height="7" rx="2" fill="#FFFFFF"/>
+    <!-- Connectivity trace -->
+    <path d="M37 16h6" stroke="#06B6D4" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Connectivity node -->
+    <circle cx="46" cy="16" r="3.5" fill="#06B6D4"/>
+    <!-- Base line -->
+    <path d="M10 48h44" stroke="#111827" stroke-width="4.5" stroke-linecap="round"/>
+    <!-- Base network node -->
+    <circle cx="32" cy="48" r="3" fill="#06B6D4"/>
+  </g>
+
+  <!-- ===== Wordmark ===== -->
+  <text x="104" y="44" font-family="'Inter','Poppins','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif" font-size="36" font-weight="700" letter-spacing="-1" fill="#111827">
+    <tspan fill="#2563EB">L</tspan>apify
+  </text>
+</svg>

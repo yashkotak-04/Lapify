@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lapify — Brand Identity System</title>
+<style>
+  :root {
+    --royal-blue: #2563EB;
+    --electric-cyan: #06B6D4;
+    --charcoal: #111827;
+    --slate: #475569;
+    --white: #FFFFFF;
+    --light-bg: #F8FAFC;
+    --border: #E2E8F0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+    background: var(--light-bg);
+    color: var(--charcoal);
+    line-height: 1.6;
+  }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
+
+  /* ===== Hero ===== */
+  .hero {
+    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #06B6D4 100%);
+    color: var(--white);
+    padding: 80px 24px;
+    text-align: center;
+  }
+  .hero h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: -2px;
+    margin-bottom: 12px;
+  }
+  .hero p {
+    font-size: 1.15rem;
+    opacity: 0.9;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .hero .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 999px;
+    padding: 6px 18px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  /* ===== Sections ===== */
+  .section { margin-bottom: 64px; }
+  .section-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--royal-blue);
+    color: var(--white);
+    font-size: 0.95rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .section-desc {
+    color: var(--slate);
+    margin-bottom: 28px;
+    max-width: 720px;
+  }
+
+  /* ===== Cards ===== */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+  }
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(37, 99, 235, 0.1);
+  }
+  .card-label {
+    margin-top: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--slate);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .card svg, .card img { max-width: 100%; height: auto; }
+
+  /* Dark card */
+  .card-dark {
+    background: var(--charcoal);
+    border-color: #1F2937;
+  }
+  .card-dark .card-label { color: #94A3B8; }
+
+  /* ===== Color Palette ===== */
+  .palette {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+  }
+  .swatch {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--white);
+  }
+  .swatch-color {
+    height: 120px;
+    display: flex;
+    align-items: flex-end;
+    padding: 12px;
+  }
+  .swatch-info { padding: 14px 16px; }
+  .swatch-name { font-weight: 700; font-size: 0.95rem; }
+  .swatch-hex { font-size: 0.8rem; color: var(--slate); font-family: 'Consolas', monospace; margin-top: 2px; }
+
+  /* ===== Typography ===== */
+  .type-row {
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .type-sample { font-size: 2.2rem; font-weight: 700; letter-spacing: -1px; flex: 1; }
+  .type-meta { color: var(--slate); font-size: 0.85rem; width: 220px; }
+
+  /* ===== Usage ===== */
+  .usage-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+  .usage-item {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    text-align: center;
+  }
+  .usage-item .icon { font-size: 2rem; margin-bottom: 10px; }
+  .usage-item h4 { font-size: 0.95rem; margin-bottom: 4px; }
+  .usage-item p { font-size: 0.8rem; color: var(--slate); }
+
+  /* ===== Footer ===== */
+  .footer {
+    text-align: center;
+    padding: 40px 24px;
+    color: var(--slate);
+    font-size: 0.85rem;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 2.2rem; }
+    .type-row { flex-direction: column; gap: 4px; }
+    .type-meta { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+  <span class="badge">Brand Identity System</span>
+  <h1>Lapify</h1>
+  <p>A premium, timeless visual identity for the world's most trusted laptop marketplace — built on innovation, trust, security, and speed.</p>
+</header>
+
+<div class="container">
+
+  <!-- ===== 1. PRIMARY LOGO ===== -->
+  <section class="section">
+    <h2 class="section-title"><span class="num">1</span> Primary Horizontal Logo</h2>
+    <p class="section-desc">The flagship lockup — the L-Mark icon paired with the Lapify wordmark. Designed for headers, website navigation, and standard branding applications.</p>
+    <div class="grid">
+      <div class="card">
+        <img src="assets/logo.svg" alt="Lapify horizontal logo" style="width: 100%; max-width: 320px;">
+        <div class="card-label">Full Color — Light Background</div>
+      </div>
+      <div class="card card-dark">
+        <img src="assets/logo-monochrome-white.svg" alt="Lapify white logo" style="width: 100%; max-width: 320px;">
+        <div class="card-label">Monochrome White — Dark Background</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 2. STACKED LOGO ===== -->
+  <section class="section">
+    <h2 class="section-title"><span class="num">2</span> Stacked Logo</h2>
+    <p class="section-desc">Icon above wordmark — ideal for square spaces, social media profiles, and compact applications.</p>
+    <div class="grid">
+      <div class="card">
+        <img src="assets/logo-stacked.svg" alt="Lapify stacked logo" style="width: 180px;">
+        <div class="card-label">Stacked — Full Color</div>
+      </div>
+      <div class="card card-dark">
+        <img src="assets/logo-stacked.svg" alt="Lapify stacked logo" style="width: 180px; filter: invert(1) brightness(2);">
+        <div class="card-label">Stacked — Inverted for Dark</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 3. STANDALONE ICON ===== -->
+  <section class="section">
+    <h2 class="section-title"><span class="num">3</span> Standalone Icon — The L-Mark</h2>
+    <p class="section-desc">The L-Mark is instantly recognizable on its own. A laptop lid containing an "L" monogram and a connectivity node — symbolizing the fusion of laptop commerce and digital connection.</p>
+    <div class="grid">
+      <div class="card">
+        <img src="assets/logo-icon.svg" alt="Lapify icon" style="width: 140px;">
+        <div class="card-label">Standalone Icon — Full Color</div>
+      </div>
+      <div class="card card-dark">
+        <img src="assets/logo-icon.svg" alt="Lapify icon" style="width: 140px; filter: invert(1) brightness(2);">
+        <div class="card-label">Standalone Icon — Inverted</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 4. APP ICON ===== -->
+  <section class="section">
+    <h2 class="section-title"><span class="num">4</span> Circular App Icon</h2>
+    <p class="section-desc">Optimized for iOS, Android, and mobile application stores. The L-Mark sits on a solid Royal Blue circle for maximum recognition at small sizes.</p>
+    <div class="grid">
+      <div class="card">
+        <img src="assets/logo-app-icon.svg" alt="Lapify app icon" style="width: 160px; border-radius: 50%; box-shadow: 0 8px 24px rgba(37,99,235,0.25);">
+        <div class="card-label">Circular App Icon</div>
+      </div>
+      <div class="card">
+        <img src="assets/favicon.svg" alt="Lapify favicon" style="width: 96px;">
+        <div class="card-label">Square Favicon — 16×16 to 512×512</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 5. MONOCHROME & VARIATIONS ===== -->
+  <section class="section">
+    <h2 class="section-title"><span class="num">5</span> Monochrome & Single-Color Variations</h2>
+    <p class="section-desc">Every variation maintains the same structural integrity — ensuring the brand remains recognizable in any context, from print to digital, light to dark.</p>
+    <div class="grid">
+      <div class="card">
+        <img src="assets/logo-monochrome-black.svg" alt="Lapify black logo" style="width: 100%; max-width: 300px;">
+        <div class="card-label">Monochrome Black</div>
+      </div>
+      <div class="card">
+        <img src="assets/logo-grayscale.svg" alt="Lapify grayscale logo" style="width: 100%; max-width: 300px;">
+        <div class="card-label">Grayscale</div>
+      </div>
+      <div class="card">
+        <img src="assets/logo-single-color.svg" alt="Lapify single color logo" style="width: 100%; max-width: 300px;">
+        <div class="card-label">Single Color — Royal Blue</div>
+      </div>
+      <div class="card card-dark">
+        <img src="assets/logo-monochrome-white.svg" alt="Lapify white logo" style="width: 100%; max-width: 300px;">
+        <div class="card-label">Monochrome White</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 6. COLOR PALETTE ===== -->
+  <section class="section">
+    <h2 class="section-title"><span class="num">6</span> Color Palette</h2>
+    <p class="section-desc">A refined technology-inspired palette engineered for trust, innovation, and premium clarity.</p>
+    <div class="palette">
+      <div class="swatch">
+        <div class="swatch-color" style="background: #2563EB;">
+          <span style="color: #fff; font-size: 0.75rem; font-weight: 600;">Primary</span>
+        </div>
+        <div class="swatch-info">
+          <div class="swatch-name">Royal Blue</div>
+          <div class="swatch-hex">#2563EB</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #06B6D4;">
+          <span style="color: #fff; font-size: 0.75rem; font-weight: 600;">Secondary</span>
+        </div>
+        <div class="swatch-info">
+          <div class="swatch-name">Electric Cyan</div>
+          <div class="swatch-hex">#06B6D4</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #111827;">
+          <span style="color: #fff; font-size: 0.75rem; font-weight: 600;">Neutral</span>
+        </div>
+        <div class="swatch-info">
+          <div class="swatch-name">Charcoal Black</div>
+          <div class="swatch-hex">#111827</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #475569;">
+          <span style="color: #fff; font-size: 0.75rem; font-weight: 600;">Neutral</span>
+        </div>
+        <div class="swatch-info">
+          <div class="swatch-name">Slate Gray</div>
+          <div class="swatch-hex">#475569</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background: #FFFFFF; border-bottom: 1px solid var(--border);">
+          <span style="color: #111827; font-size: 0.75rem; font-weight: 600;">Neutral</span>
+        </div>
+        <div class="swatch-info">
+          <div class="swatch-name">White</div>
+          <div class="swatch-hex">#FFFFFF</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 7. TYPOGRAPHY ===== -->
+  <section class="section">
+    <h2 class="section-title"><span class="num">7</span> Typography</h2>
+    <p class="section-desc">A clean, modern, premium sans-serif wordmark — bold yet elegant, with precise spacing and perfect readability at every scale.</p>
+    <div class="card" style="align-items: stretch; padding: 24px 32px;">
+      <div class="type-row">
+        <div class="type-sample">Lapify</div>
+        <div class="type-meta">Inter / Poppins<br>Weight: 700 (Bold)<br>Letter-spacing: -1px</div>
+      </div>
+      <div class="type-row">
+        <div class="type-sample" style="font-size: 1.4rem; font-weight: 600;">Lapify — Headline</div>
+        <div class="type-meta">Weight: 600 (Semibold)<br>Size: 1.4rem</div>
+      </div>
+      <div class="type-row">
+        <div class="type-sample" style="font-size: 1rem; font-weight: 400;">Lapify — Body text for descriptions and supporting copy.</div>
+        <div class="type-meta">Weight: 400 (Regular)<br>Size: 1rem</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 8. USAGE ===== -->
+  <section class="section">
+    <h2 class="section-title"><span class="num">8</span> Applications</h2>
+    <p class="section-desc">The Lapify identity is engineered to scale from a 16×16 favicon to large-format banners without losing clarity or impact.</p>
+    <div class="usage-grid">
+      <div class="usage-item">
+        <div class="icon">🌐</div>
+        <h4>Website Header</h4>
+        <p>Horizontal logo on light backgrounds</p>
+      </div>
+      <div class="usage-item">
+        <div class="icon">📱</div>
+        <h4>Mobile App</h4>
+        <p>Circular app icon + standalone L-Mark</p>
+      </div>
+      <div class="usage-item">
+        <div class="icon">🖨️</div>
+        <h4>Print & Packaging</h4>
+        <p>Monochrome black / grayscale variations</p>
+      </div>
+      <div class="usage-item">
+        <div class="icon">💼</div>
+        <h4>Business Cards</h4>
+        <p>Stacked logo for compact spaces</p>
+      </div>
+      <div class="usage-item">
+        <div class="icon">🔖</div>
+        <h4>Favicon</h4>
+        <p>Square favicon at 16×16 and beyond</p>
+      </div>
+      <div class="usage-item">
+        <div class="icon">📣</div>
+        <h4>Social Media</h4>
+        <p>Stacked logo for profile pictures</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer class="footer">
+  © 2026 Lapify — Premium Laptop Marketplace. All rights reserved.
+</footer>
+
+</body>
+</html>

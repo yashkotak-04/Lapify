@@ -1,0 +1,209 @@
+/* ============================================================
+   Lapify Unified Premium Design System
+   Brings the Login/Register visual language (gradient,
+   glassmorphism, glow, fade-in, floating blobs) to every card,
+   section, and password field across the entire website.
+   Loaded last so overrides apply globally. Light + Dark modes.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1. PASSWORD VISIBILITY ICON — universal light/dark fix
+   Black in Light Mode, White in Dark Mode. Centered & clickable.
+   ------------------------------------------------------------ */
+
+/* Auth card buttons (dark gradient card: keep white) */
+.auth-input-wrap .auth-visibility-toggle {
+  color: rgba(255, 255, 255, 0.75);
+}
+.auth-input-wrap .auth-visibility-toggle:hover {
+  color: #ffffff;
+}
+
+/* Profile / Settings / Change Password pages use .input-group-text
+   on a LIGHT surface — force the icon color to adapt. */
+.input-group-text > .auth-visibility-toggle,
+.input-group-text > i.auth-visibility-toggle {
+  color: #000000 !important;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-size: 1.05rem;
+  border-radius: 8px;
+  transition: color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+.input-group-text > .auth-visibility-toggle:hover,
+.input-group-text > i.auth-visibility-toggle:hover {
+  color: var(--primary-color) !important;
+  background: rgba(37, 99, 235, 0.08);
+  transform: scale(1.06);
+}
+.input-group-text > .auth-visibility-toggle:active,
+.input-group-text > i.auth-visibility-toggle:active {
+  transform: scale(0.94);
+}
+
+/* Any standalone .auth-visibility-toggle on light surfaces */
+body:not([data-theme="dark"]) .auth-visibility-toggle:not(.auth-input-wrap .auth-visibility-toggle):not(.auth-card .auth-visibility-toggle) {
+  color: #000000 !important;
+}
+
+/* Dark Mode: white icons */
+[data-theme="dark"] .input-group-text > .auth-visibility-toggle,
+[data-theme="dark"] .input-group-text > i.auth-visibility-toggle {
+  color: #ffffff !important;
+}
+[data-theme="dark"] .input-group-text > .auth-visibility-toggle:hover,
+[data-theme="dark"] .input-group-text > i.auth-visibility-toggle:hover {
+  color: #ffffff !important;
+  background: rgba(96, 165, 250, 0.15);
+}
+
+/* ------------------------------------------------------------
+   2. GLOBAL PREMIUM BACKGROUND — floating gradient blobs
+   Reuses the auth palette (#0f172a, #1e293b, #2563eb).
+   The <html> element carries the page color so the body can be
+   transparent, letting the fixed blobs (z-index -1) shine through
+   behind the content without being hidden by a solid body fill.
+   ------------------------------------------------------------ */
+
+html {
+  background-color: var(--bg-color);
+}
+
+body {
+  background-color: transparent !important;
+}
+
+html,
+body {
+  overflow-x: hidden !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  overflow: hidden;
+}
+
+body::before {
+  width: 600px;
+  height: 600px;
+  top: -200px;
+  right: 0;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.05) 50%, transparent 70%);
+  animation: lapifySmoothFloat 24s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+}
+
+body::after {
+  width: 550px;
+  height: 550px;
+  bottom: -180px;
+  left: 0;
+  background: radial-gradient(circle, rgba(30, 41, 59, 0.16) 0%, rgba(30, 41, 59, 0.04) 50%, transparent 70%);
+  animation: lapifySmoothFloat 28s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate-reverse;
+}
+
+@keyframes lapifySmoothFloat {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(25px, -20px, 0) scale(1.05); }
+  100% { transform: translate3d(-15px, 15px, 0) scale(0.96); }
+}
+
+/* Dark mode glow tweaks */
+[data-theme="dark"] body::before {
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.15) 0%, rgba(37, 99, 235, 0) 70%);
+}
+[data-theme="dark"] body::after {
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.1) 0%, rgba(96, 165, 250, 0) 70%);
+}
+
+/* ------------------------------------------------------------
+   3. UNIFIED PREMIUM CARDS — Handled by brand-cards.css
+   ------------------------------------------------------------ */
+
+/* ---------- Primary buttons: gradient (matches auth-btn language) ---------- */
+.btn-primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  border: none !important;
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.3) !important;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease !important;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(37, 99, 235, 0.4) !important;
+  filter: brightness(1.05);
+}
+.btn-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ---------- Auth card polish: unify radius/shadow with site cards ---------- */
+.auth-card {
+  border-radius: 1.5rem !important;
+}
+
+/* ------------------------------------------------------------
+   4. FADE-IN ENTRANCE ANIMATION for cards (staggered)
+   Matches the auth card entrance feel.
+   ------------------------------------------------------------ */
+.card,
+.custom-card,
+.card-laptop,
+.stat-card,
+.modal-content,
+.dashboard-recent-card .card-body,
+.dashboard-stat-grid .stat-card {
+  animation: lapifyCardIn 0.35s ease-out both;
+}
+
+@keyframes lapifyCardIn {
+  from {
+    opacity: 0.88;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Subtle stagger for grids */
+.product-card-col .card-laptop:nth-child(1) { animation-delay: 0.05s; }
+.product-card-col .card-laptop:nth-child(2) { animation-delay: 0.1s; }
+.product-card-col .card-laptop:nth-child(3) { animation-delay: 0.15s; }
+.product-card-col .card-laptop:nth-child(4) { animation-delay: 0.2s; }
+.product-card-col .card-laptop:nth-child(5) { animation-delay: 0.25s; }
+.product-card-col .card-laptop:nth-child(6) { animation-delay: 0.3s; }
+.product-card-col .card-laptop:nth-child(7) { animation-delay: 0.35s; }
+.product-card-col .card-laptop:nth-child(8) { animation-delay: 0.4s; }
+
+.dashboard-stat-grid .stat-card:nth-child(1) { animation-delay: 0.05s; }
+.dashboard-stat-grid .stat-card:nth-child(2) { animation-delay: 0.1s; }
+.dashboard-stat-grid .stat-card:nth-child(3) { animation-delay: 0.15s; }
+.dashboard-stat-grid .stat-card:nth-child(4) { animation-delay: 0.2s; }
+
+/* ------------------------------------------------------------
+   5. REDUCED MOTION — accessibility
+   ------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  body::before, body::after { animation: none !important; }
+  .card, .custom-card, .card-laptop, .stat-card, .modal-content,
+  .dashboard-recent-card .card-body, .dashboard-stat-grid .stat-card {
+    animation: none !important;
+  }
+  .card:hover, .custom-card:hover, .card-laptop:hover,
+  .stat-card:hover, .dashboard-stat-grid .stat-card:hover {
+    transform: none !important;
+  }
+}

@@ -1,0 +1,15 @@
+# Database Dumps & Backups
+*.sql
+backup_lapify.sql
+sql/backup_before_renumber.sql
+
+# Environment & Dependencies
+.venv/
+vendor/
+node_modules/
+
+# Logs & Temporary Files
+logs/*.log
+*.tmp
+.DS_Store
+Thumbs.db

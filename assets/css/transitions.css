@@ -1,0 +1,135 @@
+/* ============================================================
+   Lapify Premium Page Transition System
+   Centralized overlay + loader + navigation animations.
+   Works in both Light and Dark mode.
+   ============================================================ */
+
+/* ---------- Page Transition Overlay (glassmorphism) ---------- */
+#page-transition-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.28s ease, visibility 0.28s ease;
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+#page-transition-overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
+}
+
+/* ---------- Loader Card (gradient + glassmorphism) ---------- */
+.lapify-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 2.5rem;
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.92) 35%, rgba(37, 99, 235, 0.92) 100%);
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.4), 0 8px 20px rgba(2, 6, 23, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transform: scale(0.92);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+#page-transition-overlay.active .lapify-loader {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* ---------- Spinner (gradient ring) ---------- */
+.lapify-spinner {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #60a5fa;
+  border-right-color: #ffffff;
+  animation: lapifySpin 0.8s linear infinite;
+}
+
+@keyframes lapifySpin {
+  to { transform: rotate(360deg); }
+}
+
+.lapify-loader-text {
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-family: 'Poppins', 'Inter', sans-serif;
+  text-shadow: 0 2px 8px rgba(2, 6, 23, 0.3);
+}
+
+/* ---------- Page Content Entrance Animation ---------- */
+body.lapify-transitioning main {
+  animation: lapifyPageIn 0.35s ease-out both;
+}
+
+@keyframes lapifyPageIn {
+  from {
+    opacity: 0.85;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- Auth Submit Button Loading State ---------- */
+.auth-btn.loading {
+  pointer-events: none;
+  opacity: 0.75;
+  position: relative;
+}
+
+.auth-btn.loading .btn-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+  border-radius: 50%;
+  border: 2px solid rgba(15, 23, 42, 0.2);
+  border-top-color: #0f172a;
+  animation: lapifySpin 0.7s linear infinite;
+}
+
+/* ---------- Generic Button Loading (for non-auth forms) ---------- */
+.btn.loading {
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+/* ---------- Reduced Motion Support ---------- */
+@media (prefers-reduced-motion: reduce) {
+  #page-transition-overlay,
+  .lapify-loader,
+  .lapify-spinner,
+  body.lapify-transitioning main {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ---------- Dark Mode Overrides ---------- */
+[data-theme="dark"] #page-transition-overlay {
+  background: rgba(2, 6, 23, 0.5);
+}
+
+[data-theme="dark"] .lapify-loader {
+  background: linear-gradient(145deg, rgba(2, 6, 23, 0.95) 0%, rgba(15, 23, 42, 0.95) 35%, rgba(37, 99, 235, 0.9) 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+}
