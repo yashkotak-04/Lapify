@@ -162,6 +162,7 @@ $subtext = $isServerError
             letter-spacing: -0.04em;
             background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #1d4ed8 100%);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 0.5rem;
         }

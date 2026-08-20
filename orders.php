@@ -164,14 +164,26 @@ require_once __DIR__ . '/includes/navbar.php';
                                             <div class="order-items-card">
                                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                                     <h6 class="fw-bold mb-0">Items</h6>
-                                                    <a href="invoice.php?order_id=<?= $order['id'] ?>" class="btn btn-sm btn-outline-primary rounded-pill">Invoice</a>
+                                                    <a href="invoice.php?order_id=<?= (int)$order['id'] ?>" class="btn-order-invoice" title="View & Download Invoice">
+                                                        <i class="bi bi-file-earmark-text"></i>
+                                                        <span>Invoice</span>
+                                                    </a>
                                                 </div>
 
                                                 <?php foreach ($items as $item): ?>
+                                                    <?php
+                                                        $bName = trim((string)($item['brand_name'] ?? ''));
+                                                        $mName = trim((string)($item['model'] ?? ''));
+                                                        if ($bName !== '' && stripos($mName, $bName) === 0) {
+                                                            $displayTitle = $mName;
+                                                        } else {
+                                                            $displayTitle = ($bName !== '' ? $bName . ' ' : '') . $mName;
+                                                        }
+                                                    ?>
                                                     <div class="order-item-row">
                                                         <div>
                                                             <div class="fw-semibold small">
-                                                                <?= escape($item['brand_name']) ?> <?= escape($item['model']) ?>
+                                                                <?= escape($displayTitle) ?>
                                                             </div>
                                                             <div class="text-muted small">Qty: <?= (int)$item['quantity'] ?></div>
                                                         </div>

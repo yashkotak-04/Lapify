@@ -6,7 +6,13 @@ require_once __DIR__ . '/includes/navbar.php';
 
 $conn = getDbConnection();
 $current_user = getCurrentUser();
-$user_id = $current_user['id'] ?? null;
+$user_id = $current_user['id'] ?? ($_SESSION['user_id'] ?? null);
+
+$user_exclude_sql = "";
+if ($user_id !== null && (int)$user_id > 0) {
+    $uid = (int)$user_id;
+    $user_exclude_sql = " AND (l.user_id IS NULL OR l.user_id != {$uid})";
+}
 
 // Fetch Brands for Brand Grid
 $brands_query = "SELECT * FROM brands WHERE status = 'active' ORDER BY brand_name ASC";
@@ -15,7 +21,7 @@ $brands_result = mysqli_query($conn, $brands_query);
 $featured_query = "SELECT l.*, b.brand_name 
                   FROM laptops l 
                   JOIN brands b ON l.brand_id = b.id 
-                  WHERE (l.status = 'approved' OR l.approval_status = 'approved' OR l.status = 'Available') AND l.status != 'pending' AND l.approval_status != 'pending' AND l.status != 'rejected'
+                  WHERE (l.status = 'approved' OR l.approval_status = 'approved' OR l.status = 'Available') AND l.status != 'pending' AND l.approval_status != 'pending' AND l.status != 'rejected' {$user_exclude_sql}
                   ORDER BY l.id DESC LIMIT 4";
 $featured_result = mysqli_query($conn, $featured_query);
 
@@ -23,7 +29,7 @@ $featured_result = mysqli_query($conn, $featured_query);
 $new_query = "SELECT l.*, b.brand_name 
              FROM laptops l 
              JOIN brands b ON l.brand_id = b.id 
-             WHERE (l.status = 'approved' OR l.approval_status = 'approved' OR l.status = 'Available') AND l.status != 'pending' AND l.approval_status != 'pending' AND l.status != 'rejected' AND l.type = 'New' 
+             WHERE (l.status = 'approved' OR l.approval_status = 'approved' OR l.status = 'Available') AND l.status != 'pending' AND l.approval_status != 'pending' AND l.status != 'rejected' AND l.type = 'New' {$user_exclude_sql}
              ORDER BY l.id DESC LIMIT 4";
 $new_result = mysqli_query($conn, $new_query);
 
@@ -31,51 +37,67 @@ $new_result = mysqli_query($conn, $new_query);
 $old_query = "SELECT l.*, b.brand_name 
              FROM laptops l 
              JOIN brands b ON l.brand_id = b.id 
-             WHERE (l.status = 'approved' OR l.approval_status = 'approved' OR l.status = 'Available') AND l.status != 'pending' AND l.approval_status != 'pending' AND l.status != 'rejected' AND l.type = 'Old' 
+             WHERE (l.status = 'approved' OR l.approval_status = 'approved' OR l.status = 'Available') AND l.status != 'pending' AND l.approval_status != 'pending' AND l.status != 'rejected' AND l.type = 'Old' {$user_exclude_sql}
              ORDER BY l.id DESC LIMIT 4";
 $old_result = mysqli_query($conn, $old_query);
 ?>
 
-<!-- Hero Banner Section -->
+<!-- Hero Banner Section (Full Width with Lapify Border & Highlights) -->
 <section class="hero-section">
-    <div class="container">
+    <!-- Ambient Corner Glows -->
+    <div class="hero-glow-blob hero-glow-top-left"></div>
+    <div class="hero-glow-blob hero-glow-bottom-right"></div>
+    
+    <div class="container position-relative" style="z-index: 2;">
         <div class="row justify-content-center text-center">
-            <div class="col-lg-10 col-xl-8">
-                <span class="badge hero-badge-gradient fw-bold px-4 py-2.5 rounded-pill mb-4 text-uppercase tracking-wider fs-7 shadow-sm">
-                    <i class="bi bi-stars me-1"></i> Peer-to-Peer Laptop Marketplace
-                </span>
-                <h1 class="hero-title display-4 font-weight-extrabold mb-4">
+            <div class="col-lg-11 col-xl-10">
+
+                <h1 class="hero-title display-4 fw-extrabold mb-3">
                     Buy New, Buy Used, & Sell Laptops
                     <span class="d-block hero-text-gradient mt-2">Without Fees</span>
                 </h1>
-                <p class="lead mb-5 mx-auto hero-copy">
-                    Connect directly with laptop buyers and sellers in your community. Search thousands of verified specs, compare prices, and find the right device quickly.
+
+                <p class="lead mb-4 mx-auto hero-copy" style="max-width: 740px; line-height: 1.85;">
+                    Connect directly with laptop buyers and sellers in your community. Search thousands of verified specs, compare prices, and close deals safely.
                 </p>
 
                 <!-- Search Bar Form -->
-                <form action="buy.php" method="GET" class="hero-search-box mb-4">
-                    <div class="row gx-3 align-items-center">
-                        <div class="col">
-                            <div class="input-group border-0 shadow-sm rounded-pill overflow-hidden hero-input-group">
-                                <span class="input-group-text bg-transparent border-0 text-muted ps-3"><i class="bi bi-search"></i></span>
-                                <input type="text" name="search" class="form-control border-0 shadow-none ps-2" placeholder="Search by model, brand, processor (e.g. M3, i7)...">
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <button type="submit" class="btn btn-primary btn-lg fw-bold hero-search-button">
-                                <i class="bi bi-search me-2"></i> Find Laptops
-                            </button>
-                        </div>
+                <form action="buy.php" method="GET" class="hero-search-wrapper mb-4">
+                    <div class="hero-search-input-pill">
+                        <i class="bi bi-search hero-search-icon"></i>
+                        <input type="text" name="search" class="hero-search-input" placeholder="Search by model, brand, processor (e.g. M3 Max, i7 13th Gen, RTX 4070)..." autocomplete="off">
+                        <button type="submit" class="btn btn-hero-search">
+                            <i class="bi bi-search"></i>
+                            <span>Find Laptops</span>
+                        </button>
                     </div>
                 </form>
 
-                <div class="hero-action-group">
-                    <a href="buy.php" class="btn btn-soft-primary rounded-pill fw-semibold px-4 py-2">
-                        <i class="bi bi-grid-fill me-2"></i> Browse All Laptops
+                <!-- Spacious Quick Action Buttons -->
+                <div class="hero-action-group d-flex flex-wrap align-items-center justify-content-center gap-3 mb-4">
+                    <a href="buy.php" class="btn btn-hero-action-primary">
+                        <i class="bi bi-grid-fill"></i>
+                        <span>Browse All Laptops</span>
                     </a>
-                    <a href="sell.php" class="btn btn-outline-light rounded-pill fw-semibold px-4 py-2">
-                        <i class="bi bi-plus-circle-fill me-2"></i> Post Free Laptop Ad
+                    <a href="sell.php" class="btn btn-hero-action-outline">
+                        <i class="bi bi-plus-circle-fill"></i>
+                        <span>Post Free Laptop Ad</span>
                     </a>
+                </div>
+
+                <!-- Spacious Mini Trust Ribbons -->
+                <div class="d-flex flex-wrap align-items-center justify-content-center gap-4 pt-2 text-muted fw-semibold hero-trust-ribbon">
+                    <span class="d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-patch-check-fill text-success"></i> 100% Free Listing
+                    </span>
+                    <span class="text-slate-300 d-none d-sm-inline">•</span>
+                    <span class="d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-shield-lock-fill text-primary"></i> Verified Specs
+                    </span>
+                    <span class="text-slate-300 d-none d-sm-inline">•</span>
+                    <span class="d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-cash-stack text-warning"></i> Zero Middleman Markup
+                    </span>
                 </div>
             </div>
         </div>
@@ -95,19 +117,7 @@ $old_result = mysqli_query($conn, $old_query);
         </div>
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-2 row-cols-lg-4 g-3">
             <?php while ($brand = mysqli_fetch_assoc($brands_result)): 
-                // prefer explicit DB-provided logo path, else fallback to assets function
-                $dbLogo = !empty($brand['logo_path']) ? trim($brand['logo_path']) : '';
-                $logoUrl = null;
-                if ($dbLogo !== '') {
-                    // normalize stored logo_path relative to project root
-                    $candidatePath = __DIR__ . '/../' . ltrim($dbLogo, '/');
-                    if (file_exists($candidatePath)) {
-                        $logoUrl = rtrim(BASE_URL, '/') . '/' . ltrim($dbLogo, '/');
-                    }
-                }
-                if (empty($logoUrl)) {
-                    $logoUrl = getBrandLogoUrl($brand['brand_name']);
-                }
+                $logoUrl = getBrandLogoUrl($brand);
 
                 // simple accent color map by slug
                 $slug = strtolower(preg_replace('/[^a-z0-9]+/i', '', trim($brand['brand_name'])));
@@ -232,7 +242,7 @@ $old_result = mysqli_query($conn, $old_query);
                 <h3 class="fw-bold mb-1">Featured Listings</h3>
                 <p class="text-muted mb-0">Handpicked recent listings from our seller community</p>
             </div>
-            <a href="buy.php" class="btn btn-outline-primary rounded-pill btn-sm px-3 fw-bold">View All <i class="bi bi-arrow-right"></i></a>
+            <a href="buy.php" class="btn-lapify-view-more"><span>View All</span> <i class="bi bi-arrow-right"></i></a>
         </div>
         <div class="row g-4">
             <?php 
@@ -254,7 +264,7 @@ $old_result = mysqli_query($conn, $old_query);
                 <h3 class="fw-bold mb-1"><i class="bi bi-box-seam text-success me-2"></i>Brand New Laptops</h3>
                 <p class="text-muted mb-0">Factory fresh devices in sealed original packaging</p>
             </div>
-            <a href="buy.php?type=New" class="btn btn-outline-primary rounded-pill btn-sm px-3 fw-bold">View New <i class="bi bi-arrow-right"></i></a>
+            <a href="buy.php?type=New" class="btn-lapify-view-more"><span>View New</span> <i class="bi bi-arrow-right"></i></a>
         </div>
         <div class="row g-4">
             <?php 
@@ -276,7 +286,7 @@ $old_result = mysqli_query($conn, $old_query);
                 <h3 class="fw-bold mb-1"><i class="bi bi-recycle text-warning me-2"></i>Certified Pre-Owned & Old Laptops</h3>
                 <p class="text-muted mb-0">Great performance deals at budget-friendly pre-owned prices</p>
             </div>
-            <a href="buy.php?type=Old" class="btn btn-outline-primary rounded-pill btn-sm px-3 fw-bold">View Used <i class="bi bi-arrow-right"></i></a>
+            <a href="buy.php?type=Old" class="btn-lapify-view-more"><span>View Used</span> <i class="bi bi-arrow-right"></i></a>
         </div>
         <div class="row g-4">
             <?php 

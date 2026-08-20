@@ -223,8 +223,8 @@ $monthly_revenue = (float)($monthly_revenue ?? 0);
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light text-muted small text-uppercase fw-bold">
+                    <table class="table table-orders align-middle mb-0">
+                        <thead>
                             <tr>
                                 <th class="ps-4">Order Number</th>
                                 <th>Customer</th>
@@ -243,33 +243,74 @@ $monthly_revenue = (float)($monthly_revenue ?? 0);
                                         $customer_name = $order['customer_name'] ?: 'Unknown Customer';
                                         $customer_email = $order['customer_email'] ?: 'No email';
                                         $item_count = (int)($order['item_count'] ?? 0);
+                                        $initial = strtoupper(mb_substr(trim($customer_name), 0, 1, 'UTF-8'));
+                                        if (empty($initial)) $initial = 'U';
                                     ?>
                                     <tr>
-                                        <td class="ps-4 fw-bold text-primary"><?= escape($order['order_number']) ?></td>
-                                        <td>
-                                            <div class="fw-bold"><?= escape($customer_name) ?></div>
-                                            <div class="small text-muted"><?= escape($customer_email) ?></div>
+                                        <td class="ps-4">
+                                            <a href="<?= BASE_URL ?>/admin/order-details.php?order_number=<?= urlencode($order['order_number']) ?>" class="order-code-badge text-decoration-none" title="View details for <?= escape($order['order_number']) ?>">
+                                                <span class="order-code-hash">#</span><span class="order-code-text"><?= escape($order['order_number']) ?></span>
+                                            </a>
                                         </td>
-                                        <td><?= $item_count ?> item<?= $item_count === 1 ? '' : 's' ?></td>
-                                        <td class="fw-bold text-primary"><?= formatPrice($order['total_amount'] ?? 0) ?></td>
                                         <td>
-                                            <span class="badge <?= getOrderStatusBadgeClass($order_status) ?> rounded-pill px-3 py-2 fw-semibold"><?= escape(getOrderStatusLabel($order_status)) ?></span>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="customer-avatar-pill flex-shrink-0">
+                                                    <?= escape($initial) ?>
+                                                </div>
+                                                <div class="d-flex flex-column" style="min-width: 0;">
+                                                    <span class="fw-bold customer-name text-truncate" style="max-width: 220px;" title="<?= escape($customer_name) ?>"><?= escape($customer_name) ?></span>
+                                                    <span class="customer-email text-truncate" style="max-width: 220px;" title="<?= escape($customer_email) ?>"><?= escape($customer_email) ?></span>
+                                                </div>
+                                            </div>
                                         </td>
-                                        <td class="small text-muted"><?= formatDate($order['created_at']) ?></td>
+                                        <td>
+                                            <span class="order-items-badge">
+                                                <i class="bi bi-laptop text-primary"></i>
+                                                <span><?= $item_count ?> <?= $item_count === 1 ? 'item' : 'items' ?></span>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex flex-column">
+                                                <span class="order-price-val"><?= formatPrice($order['total_amount'] ?? 0) ?></span>
+                                                <span class="order-price-badge"><?= escape(strtoupper((string)($order['payment_method'] ?? 'COD'))) ?></span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="status-pill status-pill-<?= $order_status ?>">
+                                                <span class="status-dot"></span>
+                                                <span class="text-capitalize"><?= escape(getOrderStatusLabel($order_status)) ?></span>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="date-icon-box">
+                                                    <i class="bi bi-calendar3 text-primary"></i>
+                                                </div>
+                                                <div class="d-flex flex-column" style="line-height: 1.25;">
+                                                    <span class="fw-semibold text-dark" style="font-size: 0.86rem;"><?= date('M d, Y', strtotime($order['created_at'])) ?></span>
+                                                    <span class="text-muted" style="font-size: 0.74rem;"><?= date('h:i A', strtotime($order['created_at'])) ?></span>
+                                                </div>
+                                            </div>
+                                        </td>
                                         <td class="pe-4 text-end">
-                                            <div class="d-flex justify-content-end align-items-center gap-2 flex-wrap">
-                                                <a href="<?= BASE_URL ?>/admin/order-details.php?order_number=<?= urlencode($order['order_number']) ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> View</a>
+                                            <div class="d-flex justify-content-end align-items-center gap-2 flex-nowrap">
+                                                <a href="<?= BASE_URL ?>/admin/order-details.php?order_number=<?= urlencode($order['order_number']) ?>" class="btn-lapify-view" title="View order details">
+                                                    <i class="bi bi-eye-fill"></i>
+                                                    <span>View</span>
+                                                </a>
                                                 <form method="POST" class="d-inline-block mb-0">
                                                     <?= renderCsrfInput() ?>
                                                     <input type="hidden" name="action" value="update_status">
                                                     <input type="hidden" name="order_id" value="<?= (int)$order['id'] ?>">
-                                                    <select name="status" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()" aria-label="Update order status">
-                                                        <option value="placed" <?= $order_status === 'placed' ? 'selected' : '' ?>>Placed</option>
-                                                        <option value="confirmed" <?= $order_status === 'confirmed' ? 'selected' : '' ?>>Confirmed</option>
-                                                        <option value="shipped" <?= $order_status === 'shipped' ? 'selected' : '' ?>>Shipped</option>
-                                                        <option value="delivered" <?= $order_status === 'delivered' ? 'selected' : '' ?>>Delivered</option>
-                                                        <option value="cancelled" <?= $order_status === 'cancelled' ? 'selected' : '' ?>>Cancelled</option>
-                                                    </select>
+                                                    <div class="lapify-status-select-wrap">
+                                                        <select name="status" class="lapify-status-select" onchange="this.form.submit()" aria-label="Change order status" title="Quick change status">
+                                                            <option value="placed" <?= $order_status === 'placed' ? 'selected' : '' ?>>Placed</option>
+                                                            <option value="confirmed" <?= $order_status === 'confirmed' ? 'selected' : '' ?>>Confirmed</option>
+                                                            <option value="shipped" <?= $order_status === 'shipped' ? 'selected' : '' ?>>Shipped</option>
+                                                            <option value="delivered" <?= $order_status === 'delivered' ? 'selected' : '' ?>>Delivered</option>
+                                                            <option value="cancelled" <?= $order_status === 'cancelled' ? 'selected' : '' ?>>Cancelled</option>
+                                                        </select>
+                                                    </div>
                                                 </form>
                                             </div>
                                         </td>
@@ -277,7 +318,10 @@ $monthly_revenue = (float)($monthly_revenue ?? 0);
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">No orders match the current filters.</td>
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                        No orders match the current filters.
+                                    </td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>

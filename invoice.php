@@ -112,8 +112,8 @@ mysqli_stmt_close($item_stmt);
                         <a href="<?= BASE_URL ?>/orders.php" class="btn btn-light rounded-pill px-3 py-2">
                             <i class="bi bi-arrow-left"></i> Back to Orders
                         </a>
-                        <a id="download-invoice-top-btn" href="<?= BASE_URL ?>/invoice.php?order_id=<?= (int)$order['id'] ?>&download_pdf=1" target="_blank" rel="noopener" class="btn btn-success rounded-pill px-3 py-2">
-                            <i class="bi bi-download"></i> Download Invoice PDF
+                        <a id="download-invoice-top-btn" href="<?= BASE_URL ?>/invoice.php?order_id=<?= (int)$order['id'] ?>&download_pdf=1" data-no-transition="1" class="btn btn-success rounded-pill px-3 py-2">
+                            <i class="bi bi-download me-1"></i> Download Invoice PDF
                         </a>
                     </div>
                 </div>
@@ -172,7 +172,9 @@ mysqli_stmt_close($item_stmt);
                     </div>
 
                     <div class="mt-4 d-flex flex-column flex-sm-row gap-2">
-                        <a id="download-invoice-btn" href="<?= BASE_URL ?>/invoice.php?order_id=<?= (int)$order['id'] ?>&download_pdf=1" target="_blank" rel="noopener" class="btn btn-success rounded-3 px-4 py-2">Download Invoice</a>
+                        <a id="download-invoice-btn" href="<?= BASE_URL ?>/invoice.php?order_id=<?= (int)$order['id'] ?>&download_pdf=1" data-no-transition="1" class="btn btn-success rounded-3 px-4 py-2">
+                            <i class="bi bi-download me-1"></i> Download Invoice
+                        </a>
                         <a href="<?= BASE_URL ?>/buy.php" class="btn btn-outline-primary rounded-3 px-4 py-2">Continue Shopping</a>
                         <a href="<?= BASE_URL ?>/dashboard.php" class="btn btn-primary rounded-3 px-4 py-2">Go to Dashboard</a>
                     </div>
@@ -181,5 +183,104 @@ mysqli_stmt_close($item_stmt);
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const downloadBtns = document.querySelectorAll('#download-invoice-btn, #download-invoice-top-btn');
+    
+    async function startInvoiceDownload(btn) {
+        if (!btn || btn.dataset.downloading === 'true') return;
+        btn.dataset.downloading = 'true';
+        
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Preparing Invoice...';
+        btn.style.pointerEvents = 'none';
+        btn.style.opacity = '0.85';
+        
+        const url = btn.getAttribute('href');
+        
+        try {
+            // Fetch PDF and wait 1 second concurrently for clean UX
+            const [response] = await Promise.all([
+                fetch(url, { credentials: 'same-origin' }),
+                new Promise(function (resolve) { setTimeout(resolve, 1000); })
+            ]);
+            
+            if (!response.ok) {
+                throw new Error('HTTP error ' + response.status);
+            }
+            
+            const blob = await response.blob();
+            
+            // Extract filename from Content-Disposition header if available
+            let filename = 'invoice.pdf';
+            const disposition = response.headers.get('Content-Disposition') || response.headers.get('content-disposition');
+            if (disposition && disposition.indexOf('filename=') !== -1) {
+                const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+                if (matches != null && matches[1]) {
+                    filename = matches[1].replace(/['"]/g, '').trim();
+                }
+            }
+            
+            // Trigger native download via object URL
+            const blobUrl = window.URL.createObjectURL(blob);
+            const downloadLink = document.createElement('a');
+            downloadLink.style.display = 'none';
+            downloadLink.href = blobUrl;
+            downloadLink.download = filename;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            
+            setTimeout(function () {
+                document.body.removeChild(downloadLink);
+                window.URL.revokeObjectURL(blobUrl);
+            }, 1000);
+            
+            btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Download Complete';
+            if (typeof window.showToast === 'function') {
+                window.showToast('Invoice downloaded successfully!', 'success', 3500);
+            }
+        } catch (err) {
+            console.error('Invoice download error:', err);
+            // Fallback: direct download link
+            const fallbackLink = document.createElement('a');
+            fallbackLink.style.display = 'none';
+            fallbackLink.href = url;
+            fallbackLink.download = 'invoice.pdf';
+            document.body.appendChild(fallbackLink);
+            fallbackLink.click();
+            setTimeout(function () { document.body.removeChild(fallbackLink); }, 1000);
+            
+            btn.innerHTML = '<i class="bi bi-download me-1"></i> Download Started';
+        } finally {
+            setTimeout(function () {
+                btn.innerHTML = originalHtml;
+                btn.style.pointerEvents = '';
+                btn.style.opacity = '';
+                btn.dataset.downloading = 'false';
+            }, 2500);
+        }
+    }
+    
+    downloadBtns.forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            startInvoiceDownload(btn);
+        });
+    });
+
+    // If redirected with auto download parameter (?autodownload=1)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('autodownload') === '1' || urlParams.get('download') === '1') {
+        const mainBtn = document.getElementById('download-invoice-btn') || downloadBtns[0];
+        if (mainBtn) {
+            setTimeout(function () {
+                startInvoiceDownload(mainBtn);
+            }, 600);
+        }
+    }
+});
+</script>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

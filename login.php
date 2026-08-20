@@ -1,9 +1,9 @@
 <?php
-$page_title = 'Sign In | Lapify';
-$body_class = 'auth-page';
-require_once __DIR__ . '/includes/header.php';
-require_once __DIR__ . '/includes/auth.php';
+// login.php - User & Admin Sign In
+require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/functions.php';
 
 redirectIfLoggedIn();
 
@@ -129,22 +129,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     // Role-based redirect: Admin → admin dashboard, Buyer → user dashboard
                     $role = strtolower((string)($authenticatedUser['role'] ?? 'user'));
-                    if ($role === 'admin' || $userTable === 'admins') {
-                        header('Location: ' . BASE_URL . '/admin/dashboard.php?login_success=1');
-                    } else {
-                        header('Location: ' . BASE_URL . '/dashboard.php?login_success=1');
+                    $redirectTarget = ($role === 'admin' || $userTable === 'admins') 
+                        ? BASE_URL . '/admin/dashboard.php' 
+                        : BASE_URL . '/dashboard.php';
+
+                    $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') || 
+                              (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'fetch') ||
+                              (!empty($_POST['ajax']) || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json')));
+
+                    if ($isAjax) {
+                        header('Content-Type: application/json; charset=utf-8');
+                        echo json_encode([
+                            'success' => true,
+                            'message' => 'Welcome back, ' . $authenticatedUser['full_name'] . '!',
+                            'full_name' => $authenticatedUser['full_name'],
+                            'redirect' => $redirectTarget
+                        ]);
+                        exit();
                     }
+
+                    header('Location: ' . $redirectTarget . '?login_success=1');
                     exit();
                 }
             } else {
                 $errors[] = 'Invalid email or password.';
+                setFlash('error', 'Invalid email or password. Please try again.');
             }
         } catch (Throwable $e) {
             error_log($e->getMessage());
             $errors[] = 'We could not sign you in right now. Please try again later.';
+            setFlash('error', 'We could not sign you in right now. Please try again later.');
+        }
+
+        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') || 
+                  (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'fetch') ||
+                  (!empty($_POST['ajax']) || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json')));
+
+        if ($isAjax && !empty($errors)) {
+            header('Content-Type: application/json; charset=utf-8');
+            http_response_code(422);
+            echo json_encode([
+                'success' => false,
+                'message' => implode(' ', $errors)
+            ]);
+            exit();
         }
     }
 }
+
+$page_title = 'Sign In | Lapify';
+$body_class = 'auth-page';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="auth-shell">
@@ -236,9 +271,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="register.php" class="auth-link">Create one</a>
         </div>
 
-        <div class="text-center mt-3 pt-3 border-top" style="border-color: rgba(56, 189, 248, 0.2) !important;">
-            <a href="<?= BASE_URL ?>/index.php" class="text-decoration-none small d-inline-flex align-items-center gap-2 fw-semibold" style="color: #0284c7; font-size: 0.85rem;">
-                <i class="bi bi-house-door-fill"></i> Back to Dashboard
+        <div class="text-center mt-3 pt-3 border-top border-secondary-subtle">
+            <a href="<?= BASE_URL ?>/index.php" class="auth-back-btn">
+                <i class="bi bi-arrow-left"></i> <span>Back to Home</span>
             </a>
         </div>
     </div>

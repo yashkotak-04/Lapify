@@ -1,9 +1,9 @@
 <?php
-$page_title = 'Forgot Password | Lapify';
-$body_class = 'auth-page';
-require_once __DIR__ . '/includes/header.php';
-require_once __DIR__ . '/includes/auth.php';
+// forgot_password.php - Password Reset Request
+require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/mailer.php';
 
 redirectIfLoggedIn();
@@ -88,7 +88,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'We could not process your request right now. Please try again later.';
         }
     }
+
+    $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') || 
+              (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'fetch') ||
+              (!empty($_POST['ajax']) || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json')));
+
+    if ($isAjax) {
+        header('Content-Type: application/json; charset=utf-8');
+        if (!empty($errors)) {
+            http_response_code(422);
+            echo json_encode(['success' => false, 'message' => implode(' ', $errors)]);
+            exit();
+        }
+        echo json_encode([
+            'success' => true,
+            'message' => $success,
+            'is_smtp_sent' => $isSmtpSent,
+            'dev_reset_link' => $devResetLink,
+            'dev_not_found_email' => $devNotFoundEmail,
+            'dev_dispatch_error' => $devDispatchError,
+            'is_smtp_attempt_failed' => $isSmtpAttemptFailed,
+        ]);
+        exit();
+    }
 }
+
+$page_title = 'Forgot Password | Lapify';
+$body_class = 'auth-page';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="auth-shell">

@@ -1,9 +1,9 @@
 <?php
-$admin_title = 'Admin Login | Lapify';
-$body_class = 'auth-page';
-require_once __DIR__ . '/header.php';
-require_once __DIR__ . '/../includes/auth.php';
+// admin/login.php - Dedicated Admin Portal Sign-In
+require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 if (isAdmin()) {
     header('Location: ' . BASE_URL . '/admin/dashboard.php');
@@ -73,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($adminUser && $passwordOk) {
                 if (($adminUser['status'] ?? 'active') !== 'active') {
                     $errors[] = 'This administrator account is inactive.';
+                    setFlash('error', 'This administrator account is inactive.');
                 } else {
                     if ($needsHashUpgrade) {
                         try {
@@ -90,19 +91,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['phone'] = $adminUser['phone'] ?? '';
                     $_SESSION['profile_image'] = $adminUser['profile_image'] ?? null;
                     $_SESSION['role'] = 'admin';
-                    setFlash('success', 'Admin access granted.');
-                    header('Location: ' . BASE_URL . '/admin/dashboard.php?login_success=1');
+                    setFlash('success', 'Admin access granted. Welcome, ' . $adminUser['full_name'] . '!');
+
+                    $redirectTarget = BASE_URL . '/admin/dashboard.php';
+                    $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') || 
+                              (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'fetch') ||
+                              (!empty($_POST['ajax']) || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json')));
+
+                    if ($isAjax) {
+                        header('Content-Type: application/json; charset=utf-8');
+                        echo json_encode([
+                            'success' => true,
+                            'message' => 'Admin access granted. Welcome, ' . $adminUser['full_name'] . '!',
+                            'full_name' => $adminUser['full_name'],
+                            'redirect' => $redirectTarget
+                        ]);
+                        exit();
+                    }
+
+                    header('Location: ' . $redirectTarget . '?login_success=1');
                     exit();
                 }
             } else {
                 $errors[] = 'Invalid admin credentials.';
+                setFlash('error', 'Invalid admin credentials. Please check your email/username and password.');
             }
         } catch (Throwable $e) {
             error_log($e->getMessage());
             $errors[] = 'Admin authentication is unavailable right now.';
+            setFlash('error', 'Admin authentication is unavailable right now.');
+        }
+
+        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') || 
+                  (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'fetch') ||
+                  (!empty($_POST['ajax']) || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json')));
+
+        if ($isAjax && !empty($errors)) {
+            header('Content-Type: application/json; charset=utf-8');
+            http_response_code(422);
+            echo json_encode([
+                'success' => false,
+                'message' => implode(' ', $errors)
+            ]);
+            exit();
         }
     }
 }
+
+$admin_title = 'Admin Login | Lapify';
+$body_class = 'auth-page';
+require_once __DIR__ . '/header.php';
 ?>
 
 <div class="auth-shell">

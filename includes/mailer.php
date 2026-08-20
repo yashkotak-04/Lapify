@@ -153,7 +153,8 @@ HTML;
                 $mail->SMTPAutoTLS = false;
             }
 
-            $mail->Timeout = 20;
+            $mail->Timeout = 3;
+            $mail->Timelimit = 4;
             $mail->SMTPOptions = [
                 'ssl' => [
                     'verify_peer'       => false,

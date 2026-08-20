@@ -79,7 +79,7 @@ if ($user) {
                 <!-- Auth Action Buttons / Dropdown -->
                 <div class="d-flex navbar-actions align-items-lg-center mt-3 mt-lg-0">
 
-                    <?php if ($user && ($user['role'] ?? '') === 'admin'): ?>
+                    <?php if ($user && ($user['role'] ?? '') === 'admin' && !empty($_SESSION['admin_id'])): ?>
                         <a href="<?= BASE_URL ?>/admin/dashboard.php" class="btn btn-admin-back d-none d-lg-inline-flex align-items-center gap-2 me-3" title="Back to Admin Dashboard">
                             <i class="bi bi-shield-lock-fill fs-5"></i>
                             <span class="fw-semibold">Back to Admin</span>
@@ -125,8 +125,8 @@ if ($user) {
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-2" aria-labelledby="userMenuDropdown">
                                 <li class="px-3 py-2 user-menu-header">
-                                    <div class="fw-semibold user-menu-name text-white"><?= escape($user['full_name']) ?></div>
-                                    <div class="small user-menu-email text-white-50"><?= escape($user['email']) ?></div>
+                                    <div class="fw-bold user-menu-name"><?= escape($user['full_name']) ?></div>
+                                    <div class="small user-menu-email"><?= escape($user['email']) ?></div>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
                                 <?php if (($user['role'] ?? '') === 'admin'): ?>
@@ -164,22 +164,27 @@ if ($user) {
                                     </a>
                                 </li>
                                 <li>
+                                    <a class="dropdown-item" href="<?= BASE_URL ?>/my-queries.php">
+                                        <i class="bi bi-chat-left-text me-2"></i>My Inquiries & Replies
+                                    </a>
+                                </li>
+                                <li>
                                     <a class="dropdown-item" href="<?= BASE_URL ?>/profile.php">
                                         <i class="bi bi-person-gear me-2"></i>Profile & Settings
                                     </a>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <a class="dropdown-item text-danger" href="<?= BASE_URL ?>/logout.php">
+                                    <a class="dropdown-item dropdown-item-logout text-danger" href="<?= BASE_URL ?>/logout.php">
                                         <i class="bi bi-box-arrow-right me-2"></i>Logout
                                     </a>
                                 </li>
                             </ul>
                         </div>
                     <?php else: ?>
-                        <div class="d-flex flex-column flex-lg-row gap-2 w-100 w-lg-auto">
-                            <a href="<?= BASE_URL ?>/login.php" class="btn btn-outline-primary px-4 rounded-pill">Log In</a>
-                            <a href="<?= BASE_URL ?>/register.php" class="btn btn-primary px-4 rounded-pill">Register</a>
+                        <div class="d-flex flex-column flex-lg-row gap-2 w-100 w-lg-auto align-items-lg-center">
+                            <a href="<?= BASE_URL ?>/login.php" class="btn btn-navbar-login">Log In</a>
+                            <a href="<?= BASE_URL ?>/register.php" class="btn btn-navbar-register">Register</a>
                         </div>
                     <?php endif; ?>
                 </div>

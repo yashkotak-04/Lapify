@@ -151,8 +151,8 @@ mysqli_stmt_close($stmt);
             <h2 class="fw-bold mb-1"><i class="bi bi-cart3 text-primary me-2"></i>Shopping Cart</h2>
             <p class="text-muted mb-0">Review items in your cart before sending purchase requests</p>
         </div>
-        <a href="buy.php" class="btn btn-outline-primary rounded-pill btn-sm px-3 fw-bold">
-            <i class="bi bi-plus-lg me-1"></i>Continue Shopping
+        <a href="buy.php" class="btn-lapify-view-more">
+            <i class="bi bi-plus-lg"></i> <span>Continue Shopping</span>
         </a>
     </div>
 

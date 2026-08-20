@@ -120,52 +120,54 @@
     });
   }
 
-  /* ---------- Live totals (cart page) ---------- */
+  /* ---------- Live totals (cart & shipping pages) ---------- */
   function updateTotals() {
     const cartItems = document.querySelectorAll('.checkout-item');
-    if (!cartItems || cartItems.length === 0) {
-      return; // Do NOT recalculate or overwrite server-rendered totals on shipping or payment pages!
-    }
-
     const subtotalEl = document.getElementById('checkout-subtotal');
     const discountEl = document.getElementById('checkout-discount');
     const shippingEl = document.getElementById('checkout-shipping');
     const totalEl = document.getElementById('checkout-total');
 
     let subtotal = 0;
-    cartItems.forEach(function (item) {
-      const price = parseFloat(item.getAttribute('data-price') || '0');
-      const qtyInput = item.querySelector('.checkout-qty input[type="number"]');
-      const qty = qtyInput ? (parseInt(qtyInput.value, 10) || 1) : 1;
-      subtotal += price * qty;
+    if (cartItems && cartItems.length > 0) {
+      cartItems.forEach(function (item) {
+        const price = parseFloat(item.getAttribute('data-price') || '0');
+        const qtyInput = item.querySelector('.checkout-qty input[type="number"]');
+        const qty = qtyInput ? (parseInt(qtyInput.value, 10) || 1) : 1;
+        subtotal += price * qty;
 
-      // Update individual item total price displayed in cart
-      const itemPriceEl = item.querySelector('.checkout-item-price');
-      if (itemPriceEl) {
-        itemPriceEl.textContent = formatINR(price * qty);
-      }
-
-      // Update summary sidebar item quantity and line price
-      const itemId = item.getAttribute('data-id');
-      if (itemId) {
-        const summaryItem = document.querySelector(`.checkout-summary-item[data-id="${itemId}"]`);
-        if (summaryItem) {
-          const qtyEl = summaryItem.querySelector('.item-qty');
-          const lineEl = summaryItem.querySelector('.item-line');
-          if (qtyEl) qtyEl.textContent = '× ' + qty;
-          if (lineEl) lineEl.textContent = formatINR(price * qty);
+        // Update individual item total price displayed in cart
+        const itemPriceEl = item.querySelector('.checkout-item-price');
+        if (itemPriceEl) {
+          itemPriceEl.textContent = formatINR(price * qty);
         }
+
+        // Update summary sidebar item quantity and line price
+        const itemId = item.getAttribute('data-id');
+        if (itemId) {
+          const summaryItem = document.querySelector(`.checkout-summary-item[data-id="${itemId}"]`);
+          if (summaryItem) {
+            const qtyEl = summaryItem.querySelector('.item-qty');
+            const lineEl = summaryItem.querySelector('.item-line');
+            if (qtyEl) qtyEl.textContent = '× ' + qty;
+            if (lineEl) lineEl.textContent = formatINR(price * qty);
+          }
+        }
+      });
+
+      if (subtotalEl) {
+        animateValue(subtotalEl, parseFloat(subtotalEl.dataset.lastValue || '0'), subtotal);
+        subtotalEl.dataset.lastValue = subtotal;
       }
-    });
+    } else if (subtotalEl) {
+      subtotal = parseFloat(subtotalEl.dataset.lastValue || subtotalEl.getAttribute('data-last-value') || '0');
+    }
 
-    if (!subtotalEl) return;
+    if (!subtotalEl && !totalEl) return;
 
-    const discount = parseFloat(subtotalEl.getAttribute('data-discount') || '0');
+    const discount = parseFloat(subtotalEl ? (subtotalEl.getAttribute('data-discount') || '0') : '0');
     const shipping = parseFloat(shippingEl ? (shippingEl.getAttribute('data-shipping') || '0') : '0');
     const total = Math.max(0, subtotal - discount + shipping);
-
-    animateValue(subtotalEl, parseFloat(subtotalEl.dataset.lastValue || '0'), subtotal);
-    subtotalEl.dataset.lastValue = subtotal;
 
     if (discountEl) {
       discountEl.textContent = discount > 0 ? '-' + formatINR(discount) : formatINR(0);
@@ -294,15 +296,11 @@
         }
 
         successCard.innerHTML = `
-          <div class="d-flex align-items-center gap-2">
-            <span class="coupon-success-badge">
-              <i class="bi bi-patch-check-fill fs-5"></i>
-              Coupon <strong>${normalized}</strong> Applied!
-            </span>
+          <div class="coupon-success-badge">
+            <i class="bi bi-patch-check-fill"></i>
+            <span>Coupon <strong>${normalized}</strong> Applied!</span>
           </div>
-          <div class="coupon-saved-text">
-            Saved ${formatINR(discount)}
-          </div>
+          <div class="coupon-saved-text">Saved ${formatINR(discount)}</div>
         `;
 
         // Highlight discount row in summary sidebar
@@ -327,6 +325,13 @@
         const formData = new FormData();
         formData.append('apply_promo', '1');
         formData.append('promo_code', normalized);
+        document.querySelectorAll('.checkout-item').forEach(function (item) {
+          const itemId = item.getAttribute('data-id');
+          const qtyInput = item.querySelector('.checkout-qty input[type="number"]');
+          if (itemId && qtyInput) {
+            formData.append('quantity[' + itemId + ']', qtyInput.value);
+          }
+        });
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfInput = document.querySelector('input[name="csrf_token"]');
         const csrfVal = csrfMeta ? csrfMeta.getAttribute('content') : (csrfInput ? csrfInput.value : '');
@@ -350,23 +355,101 @@
     const methods = document.querySelectorAll('.shipping-method');
     if (!methods.length) return;
 
+    function selectMethod(method) {
+      const radio = method.querySelector('input[type="radio"]');
+      if (!radio) return;
+
+      radio.checked = true;
+      methods.forEach(function (m) {
+        m.classList.toggle('selected', m === method);
+      });
+
+      const shipping = parseFloat(radio.getAttribute('data-cost') || '0');
+      const shippingEl = document.getElementById('checkout-shipping');
+      if (shippingEl) {
+        shippingEl.setAttribute('data-shipping', shipping);
+        shippingEl.textContent = shipping > 0 ? formatINR(shipping) : 'Free';
+      }
+      updateTotals();
+    }
+
     methods.forEach(function (method) {
       const radio = method.querySelector('input[type="radio"]');
       if (!radio) return;
 
-      method.addEventListener('click', function () {
-        radio.checked = true;
-        methods.forEach(function (m) {
-          m.classList.toggle('selected', m === method);
-        });
+      method.addEventListener('click', function (e) {
+        selectMethod(method);
+      });
 
-        const shipping = parseFloat(radio.getAttribute('data-cost') || '0');
-        const shippingEl = document.getElementById('checkout-shipping');
-        if (shippingEl) {
-          shippingEl.setAttribute('data-shipping', shipping);
-          shippingEl.textContent = shipping > 0 ? formatINR(shipping) : 'Free';
+      radio.addEventListener('change', function () {
+        selectMethod(method);
+      });
+    });
+  }
+
+  /* ---------- Shipping Form Validation & Submit Helper ---------- */
+  function initShippingForm() {
+    const form = document.getElementById('shipping-form');
+    if (!form) return;
+
+    form.addEventListener('submit', function (e) {
+      const firstName = form.querySelector('#first_name');
+      const lastName = form.querySelector('#last_name');
+      const address = form.querySelector('#address');
+      const city = form.querySelector('#city');
+      const state = form.querySelector('#state');
+      const zip = form.querySelector('#zip');
+      const phone = form.querySelector('#phone');
+
+      let firstInvalid = null;
+
+      function checkField(el, condition, errorMsg) {
+        if (!el) return true;
+        if (condition) {
+          el.classList.remove('is-invalid');
+          return true;
+        } else {
+          el.classList.add('is-invalid');
+          if (!firstInvalid) {
+            firstInvalid = el;
+            toast(errorMsg, 'warning');
+          }
+          return false;
         }
-        updateTotals();
+      }
+
+      const validFirst = checkField(firstName, firstName && firstName.value.trim() !== '', 'Please enter your first name.');
+      const validLast = checkField(lastName, lastName && lastName.value.trim() !== '', 'Please enter your last name.');
+      const validAddr = checkField(address, address && address.value.trim() !== '', 'Please enter your delivery street address.');
+      const validCity = checkField(city, city && city.value.trim() !== '', 'Please enter your city.');
+      const validState = checkField(state, state && state.value.trim() !== '', 'Please enter your state.');
+      const validZip = checkField(zip, zip && /^\d{5,6}$/.test(zip.value.replace(/\D/g, '')), 'Please enter a valid 6-digit PIN code.');
+      const validPhone = checkField(phone, phone && phone.value.replace(/\D/g, '').length >= 10, 'Please enter a valid 10-digit phone number.');
+
+      if (!validFirst || !validLast || !validAddr || !validCity || !validState || !validZip || !validPhone) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (firstInvalid) {
+          firstInvalid.focus();
+          firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        form.dataset.submitting = 'false';
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.removeAttribute('aria-busy');
+          submitBtn.classList.remove('loading');
+          if (submitBtn.dataset.originalHtml) {
+            submitBtn.innerHTML = submitBtn.dataset.originalHtml;
+          }
+        }
+        return false;
+      }
+    });
+
+    // Remove is-invalid on input
+    form.querySelectorAll('input').forEach(function (input) {
+      input.addEventListener('input', function () {
+        this.classList.remove('is-invalid');
       });
     });
   }
@@ -384,6 +467,7 @@
     initQuantitySteppers();
     initPromoCode();
     initShippingMethods();
+    initShippingForm();
     initConfirmPage();
     updateTotals();
   }

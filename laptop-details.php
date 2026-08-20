@@ -249,9 +249,12 @@ $is_seller = ($user_id && $user_id == $laptop['user_id']);
                             <div class="card-body p-3">
                                 <div class="small font-weight-bold text-uppercase" style="color: #64748b !important;"><?= escape($rel['brand_name']) ?></div>
                                 <h6 class="fw-bold text-truncate mb-2" style="color: #0f172a !important;"><?= escape($rel['model']) ?></h6>
-                                <div class="d-flex align-items-center justify-content-between border-top border-slate-200 pt-2">
-                                    <div class="fw-bold" style="color: #2563eb !important; font-size: 1.1rem;"><?= formatPrice($rel['price']) ?></div>
-                                    <a href="laptop-details.php?id=<?= $rel['id'] ?>" class="btn btn-soft-primary btn-sm rounded-pill px-3">View</a>
+                                <div class="d-flex align-items-center justify-content-between border-top border-slate-200 pt-2.5 mt-2">
+                                    <div class="fw-bold text-primary" style="font-size: 1.15rem;"><?= formatPrice($rel['price']) ?></div>
+                                    <a href="laptop-details.php?id=<?= $rel['id'] ?>" class="btn btn-outline-primary rounded-pill px-3.5 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-2xs" title="View Laptop Details">
+                                        <i class="bi bi-eye"></i>
+                                        <span>View</span>
+                                    </a>
                                 </div>
                             </div>
                         </div>

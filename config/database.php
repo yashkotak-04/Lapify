@@ -240,7 +240,7 @@ function seedLaptopsIfEmpty(PDO $pdo): void {
     }
 }
 
-define('SCHEMA_VERSION', 9);
+define('SCHEMA_VERSION', 11);
 
 
 /**
@@ -479,6 +479,28 @@ function ensureAuthSchema(PDO $pdo): void {
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     ");
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS contact_queries (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT DEFAULT NULL,
+            name VARCHAR(100) NOT NULL,
+            email VARCHAR(150) NOT NULL,
+            subject VARCHAR(200) DEFAULT NULL,
+            message TEXT NOT NULL,
+            admin_reply TEXT DEFAULT NULL,
+            replied_at DATETIME DEFAULT NULL,
+            replied_by INT DEFAULT NULL,
+            status ENUM('new','read','resolved') NOT NULL DEFAULT 'new',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    ");
+
+    ensureTableColumn($pdo, 'contact_queries', 'admin_reply', "TEXT DEFAULT NULL");
+    ensureTableColumn($pdo, 'contact_queries', 'replied_at', "DATETIME DEFAULT NULL");
+    ensureTableColumn($pdo, 'contact_queries', 'replied_by', "INT DEFAULT NULL");
 
     try {
         $pdo->exec("ALTER TABLE orders MODIFY COLUMN status ENUM('placed','confirmed','shipped','delivered','cancelled') NOT NULL DEFAULT 'placed'");

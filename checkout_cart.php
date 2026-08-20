@@ -23,6 +23,59 @@ if ($hasDirect) {
 
 $checkout = initCheckoutSession($hasDirect);
 
+// Handle AJAX promo code application
+$isApplyPromo = $_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['apply_promo']) || (isset($_POST['form_action']) && $_POST['form_action'] === 'apply_promo'));
+if ($isApplyPromo) {
+    header('Content-Type: application/json');
+    $csrf = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (!verifyCsrfToken($csrf)) {
+        echo json_encode(['success' => false, 'message' => 'Invalid or expired security token. Please refresh the page.']);
+        exit();
+    }
+
+    $code = trim($_POST['promo_code'] ?? '');
+    $quantities = $_POST['quantity'] ?? [];
+    $items = $checkout['items'] ?? [];
+    $subtotal = 0.0;
+
+    foreach ($items as &$item) {
+        $id = (int)$item['id'];
+        $maxStock = max(1, (int)($item['stock_quantity'] ?? $item['quantity'] ?? $item['max_stock'] ?? $item['available_stock'] ?? 1));
+        $item['max_stock'] = $maxStock;
+        $item['available_stock'] = $maxStock;
+        if (isset($quantities[$id])) {
+            $item['selected_quantity'] = max(1, min($maxStock, (int)$quantities[$id]));
+        } else {
+            $item['selected_quantity'] = max(1, (int)($item['selected_quantity'] ?? 1));
+        }
+        $subtotal += (float)$item['price'] * (int)$item['selected_quantity'];
+    }
+    unset($item);
+
+    $promoResult = applyPromoCode($code, $subtotal);
+    if ($promoResult['success']) {
+        $discount = (float)$promoResult['discount'];
+        $promoCode = $promoResult['code'];
+        updateCheckoutSession([
+            'items'      => $items,
+            'subtotal'   => $subtotal,
+            'discount'   => $discount,
+            'promo_code' => $promoCode,
+        ]);
+        echo json_encode([
+            'success'  => true,
+            'message'  => $promoResult['message'],
+            'discount' => $discount,
+            'code'     => $promoCode,
+            'subtotal' => $subtotal,
+            'total'    => max(0, $subtotal - $discount + (float)($checkout['shipping_cost'] ?? 0)),
+        ]);
+    } else {
+        echo json_encode(['success' => false, 'message' => $promoResult['message']]);
+    }
+    exit();
+}
+
 // Handle item removal
 $isRemove = $_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['remove_item']) || (isset($_POST['form_action']) && $_POST['form_action'] === 'remove_item'));
 if ($isRemove) {
@@ -38,6 +91,18 @@ if ($isRemove) {
             $subtotal += (float)$item['price'] * (int)($item['selected_quantity'] ?? 1);
         }
 
+        // Recheck promo discount on new subtotal if promo was active
+        $promoCode = $checkout['promo_code'] ?? null;
+        $discount = 0.0;
+        if (!empty($promoCode) && $subtotal > 0) {
+            $promoRes = applyPromoCode($promoCode, $subtotal);
+            if ($promoRes['success']) {
+                $discount = (float)$promoRes['discount'];
+            } else {
+                $promoCode = null;
+            }
+        }
+
         // Also remove from DB cart
         $currUser = getCurrentUser();
         if ($currUser) {
@@ -49,8 +114,10 @@ if ($isRemove) {
         }
 
         updateCheckoutSession([
-            'items'    => $items,
-            'subtotal' => $subtotal,
+            'items'      => $items,
+            'subtotal'   => $subtotal,
+            'discount'   => $discount,
+            'promo_code' => $promoCode,
         ]);
         setFlash('success', 'Item removed from your cart.');
         header('Location: ' . BASE_URL . '/checkout_cart.php');
@@ -71,19 +138,39 @@ if ($isProceed) {
 
         foreach ($items as &$item) {
             $id = (int)$item['id'];
+            $maxStock = max(1, (int)($item['stock_quantity'] ?? $item['quantity'] ?? $item['max_stock'] ?? $item['available_stock'] ?? 1));
+            $item['max_stock'] = $maxStock;
+            $item['available_stock'] = $maxStock;
+
             if (isset($quantities[$id])) {
-                $maxStock = (int)($item['available_stock'] ?? 1);
                 $qty = max(1, min($maxStock, (int)$quantities[$id]));
                 $item['selected_quantity'] = $qty;
+            } else {
+                $item['selected_quantity'] = max(1, (int)($item['selected_quantity'] ?? 1));
             }
             $subtotal += (float)$item['price'] * (int)$item['selected_quantity'];
         }
         unset($item);
 
+        // Recalculate discount if a promo code is applied
+        $promoCode = trim($_POST['promo_code'] ?? $checkout['promo_code'] ?? '');
+        $discount = 0.0;
+        if (!empty($promoCode) && $subtotal > 0) {
+            $promoRes = applyPromoCode($promoCode, $subtotal);
+            if ($promoRes['success']) {
+                $discount = (float)$promoRes['discount'];
+                $promoCode = $promoRes['code'];
+            } else {
+                $promoCode = null;
+            }
+        }
+
         updateCheckoutSession([
-            'items' => $items,
-            'subtotal' => $subtotal,
-            'step' => 2,
+            'items'      => $items,
+            'subtotal'   => $subtotal,
+            'discount'   => $discount,
+            'promo_code' => $promoCode,
+            'step'       => 2,
         ]);
         header('Location: ' . BASE_URL . '/checkout_shipping.php');
         exit();
@@ -126,6 +213,7 @@ require_once __DIR__ . '/includes/navbar.php';
                     <form method="POST" action="checkout_cart.php" id="cart-form">
                         <?= renderCsrfInput() ?>
                         <input type="hidden" name="form_action" id="cart-form-action" value="proceed_shipping">
+                        <input type="hidden" name="promo_code" id="promo-code-hidden" value="<?= escape($promoCode ?? '') ?>">
 
                         <div class="checkout-items-list">
                             <?php foreach ($items as $item): ?>
@@ -218,9 +306,9 @@ require_once __DIR__ . '/includes/navbar.php';
                     </div>
                     <div id="promo-feedback">
                         <?php if (!empty($promoCode)): ?>
-                            <div class="coupon-success-card">
+                            <div class="coupon-success-card" id="coupon-success-banner">
                                 <div class="coupon-success-badge">
-                                    <i class="bi bi-check-circle-fill"></i>
+                                    <i class="bi bi-patch-check-fill"></i>
                                     <span>Coupon <strong><?= escape($promoCode) ?></strong> Applied!</span>
                                 </div>
                                 <div class="coupon-saved-text">Saved <?= formatPrice($discount) ?></div>

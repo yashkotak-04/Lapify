@@ -21,9 +21,24 @@ if (isset($_SESSION['user_id'])) {
     }
 }
 
-$_SESSION = [];
-session_unset();
-session_destroy();
+// Clear user and admin credentials from session
+unset(
+    $_SESSION['user_id'],
+    $_SESSION['full_name'],
+    $_SESSION['email'],
+    $_SESSION['phone'],
+    $_SESSION['role'],
+    $_SESSION['cart'],
+    $_SESSION['admin_id'],
+    $_SESSION['admin_logged_in'],
+    $_SESSION['admin_username'],
+    $_SESSION['admin_name'],
+    $_SESSION['admin_email']
+);
 
-header('Location: ' . BASE_URL . '/login.php');
+// Set success logout toast message (Green popup)
+setFlash('success', 'You have been logged out successfully. See you again!');
+
+// Redirect to Home / Index page
+header('Location: ' . BASE_URL . '/index.php');
 exit();

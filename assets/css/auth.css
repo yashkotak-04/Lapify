@@ -285,6 +285,36 @@
   margin-top: 1.25rem;
 }
 
+/* ---------- Back to Home button ---------- */
+.auth-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #64748b !important;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.4rem 0.9rem;
+  border-radius: 8px;
+  text-decoration: none !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent;
+}
+
+.auth-back-btn:hover {
+  color: #2563eb !important;
+  background-color: rgba(37, 99, 235, 0.08);
+  transform: translateX(-2px);
+}
+
+.auth-back-btn i {
+  font-size: 0.95rem;
+  transition: transform 0.2s ease;
+}
+
+.auth-back-btn:hover i {
+  transform: translateX(-3px);
+}
+
 /* ---------- Role selector ---------- */
 .auth-roles {
   display: grid;

@@ -6,7 +6,7 @@ require_once __DIR__ . '/includes/navbar.php';
 
 $conn = getDbConnection();
 $current_user = getCurrentUser();
-$user_id = $current_user['id'] ?? null;
+$user_id = $current_user['id'] ?? ($_SESSION['user_id'] ?? null);
 
 // Read GET Filter parameters
 $search = sanitizeInput($_GET['search'] ?? '');
@@ -27,6 +27,13 @@ $offset = ($page - 1) * $limit;
 $where_clauses = ["(l.status = 'approved' OR l.approval_status = 'approved' OR l.status = 'Available') AND l.status != 'pending' AND l.approval_status != 'pending' AND l.status != 'rejected'"];
 $params = [];
 $param_types = "";
+
+// Exclude current logged-in user's own listings from the buy catalog (other users can still see it)
+if ($user_id !== null && (int)$user_id > 0) {
+    $where_clauses[] = "(l.user_id IS NULL OR l.user_id != ?)";
+    $params[] = (int)$user_id;
+    $param_types .= "i";
+}
 
 if (!empty($search)) {
     $where_clauses[] = "(l.model LIKE ? OR l.description LIKE ? OR l.processor LIKE ? OR b.brand_name LIKE ?)";

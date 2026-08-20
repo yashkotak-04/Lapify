@@ -239,11 +239,11 @@ require_once __DIR__ . '/includes/navbar.php';
                             <label for="profile_image" class="form-label font-weight-bold">Profile Photo (Max 2MB)</label>
                             <div class="custom-file-upload-wrapper">
                                 <input type="file" name="profile_image" id="profile_image" class="d-none" accept="image/jpeg,image/png,image/webp">
-                                <label for="profile_image" class="form-control d-flex align-items-center justify-content-between px-3 cursor-pointer rounded-3 shadow-none border" style="height: 42px; background: var(--surface-card, #ffffff);">
-                                    <span class="btn btn-sm btn-primary rounded-pill px-3 font-weight-bold d-inline-flex align-items-center gap-1 shadow-sm" style="font-size: 0.8rem; padding: 0.25rem 0.75rem;">
-                                        <i class="bi bi-cloud-arrow-up-fill"></i> Choose Photo
+                                <label for="profile_image" class="profile-file-upload-box">
+                                    <span class="profile-upload-btn">
+                                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Choose Photo
                                     </span>
-                                    <span id="file-name-display" class="small text-muted text-truncate ms-2" style="max-width: 200px; font-size: 0.85rem;">No photo selected</span>
+                                    <span id="file-name-display" class="profile-upload-filename">No photo selected</span>
                                 </label>
                             </div>
                         </div>

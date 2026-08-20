@@ -61,14 +61,34 @@ if ($brandErr !== null) {
     $errors['brand_id'] = $brandErr;
 }
 
-// --- Model (from dependent dropdown) ---
-[$modelName, $modelErr] = validateRequiredString('model', 'Model', 100);
-if ($modelErr !== null) {
-    $errors['model'] = $modelErr;
+// --- Model (from dropdown or custom text input) ---
+$modelName = trim((string)($_POST['model'] ?? ''));
+if ($modelName === '' || $modelName === '__custom__') {
+    $modelName = trim((string)($_POST['model_custom'] ?? ''));
+}
+if ($modelName === '') {
+    $errors['model'] = 'Model name is required.';
+} elseif (mb_strlen($modelName) < 2) {
+    $errors['model'] = 'Model name must be at least 2 characters.';
+} elseif (mb_strlen($modelName) > 100) {
+    $errors['model'] = 'Model name must be 100 characters or fewer.';
 }
 
 // --- Condition (New / Old) ---
-$condition = strtolower(trim((string)($_POST['condition_type'] ?? '')));
+$condition = strtolower(trim((string)($_POST['condition_type'] ?? 'old')));
+
+// Ensure regular users cannot submit 'new' laptops (only admins can add brand new inventory)
+$isAdmin = (($user['role'] ?? '') === 'admin' || !empty($_SESSION['admin_id']));
+if (!$isAdmin && $condition === 'new') {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Brand New laptops can only be added by verified administrators. Please list your laptop as Pre-Owned/Old.',
+        'field' => 'condition_type'
+    ]);
+    exit;
+}
+
 if (!in_array($condition, ['new', 'old'], true)) {
     $errors['condition_type'] = 'Please select a condition (New or Old).';
 }
@@ -99,7 +119,7 @@ try {
     $pdo = getPdoConnection();
 
     // ---------------------------------------------------------
-    // BRAND/MODEL CONSISTENCY VALIDATION:
+    // BRAND VALIDATION:
     // Verify the submitted brand actually exists and is active.
     // ---------------------------------------------------------
     $brandStmt = $pdo->prepare("SELECT id FROM brands WHERE id = ? AND status = 'active'");
@@ -111,15 +131,18 @@ try {
     }
 
     // ---------------------------------------------------------
-    // BRAND/MODEL CONSISTENCY VALIDATION:
-    // Verify the submitted model actually belongs to this brand.
+    // MODEL AUTO-REGISTRATION:
+    // Ensure the model is registered under this brand in brand_models
     // ---------------------------------------------------------
     $modelStmt = $pdo->prepare("SELECT id FROM brand_models WHERE brand_id = ? AND LOWER(model_name) = LOWER(?)");
     $modelStmt->execute([$brandId, $modelName]);
     if (!$modelStmt->fetch()) {
-        http_response_code(422);
-        echo json_encode(['success' => false, 'message' => 'The selected model does not belong to the selected brand. Please choose a valid model.', 'field' => 'model']);
-        exit;
+        try {
+            $insModel = $pdo->prepare("INSERT INTO brand_models (brand_id, model_name, year) VALUES (?, ?, YEAR(CURDATE()))");
+            $insModel->execute([$brandId, $modelName]);
+        } catch (Throwable $ignore) {
+            // Continue safely if already exists
+        }
     }
 
     // ---------------------------------------------------------
@@ -191,18 +214,22 @@ try {
               . "• Verified listing on Lapify Marketplace with Buyer Protection.";
     }
 
-    // Handle image upload (optional).
+    // Handle image upload (required).
     $imageName = null;
-    if (!empty($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
-        $uploadError = '';
-        $uploaded = uploadImage($_FILES['image'], LAPTOP_UPLOAD_DIR, $uploadError);
-        if ($uploaded === false) {
-            http_response_code(422);
-            echo json_encode(['success' => false, 'message' => $uploadError, 'field' => 'image']);
-            exit;
-        }
-        $imageName = $uploaded;
+    if (empty($_FILES['image']) || $_FILES['image']['error'] === UPLOAD_ERR_NO_FILE) {
+        http_response_code(422);
+        echo json_encode(['success' => false, 'message' => 'Please upload a photo of the laptop.', 'field' => 'image']);
+        exit;
     }
+
+    $uploadError = '';
+    $uploaded = uploadImage($_FILES['image'], LAPTOP_UPLOAD_DIR, $uploadError);
+    if ($uploaded === false) {
+        http_response_code(422);
+        echo json_encode(['success' => false, 'message' => $uploadError, 'field' => 'image']);
+        exit;
+    }
+    $imageName = $uploaded;
 
     // Build the SQL using only columns that exist (condition_type stores new/old,
     // the human-readable `condition` field stores the descriptive label).

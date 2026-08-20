@@ -5,86 +5,160 @@ require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
 ?>
 
-<!-- Hero Banner (High Contrast Light Theme) -->
-<div class="py-5 mb-5" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%); border-bottom: 1px solid #cbd5e1; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);">
-    <div class="container text-center py-4">
-        <h1 class="display-5 fw-extrabold mb-3" style="color: #0f172a !important; letter-spacing: -0.5px;">About Lapify Marketplace</h1>
-        <p class="lead mx-auto fs-5" style="max-width: 680px; line-height: 1.9; color: #334155 !important;">
-            A modern, direct laptop marketplace designed for seamless peer-to-peer buying and selling of new and used laptop computers.
+<!-- Hero Banner (Lapify Theme) -->
+<div class="about-hero-banner mb-5">
+    <div class="container text-center py-3">
+        <h1 class="display-5 fw-extrabold mb-3 text-dark" style="letter-spacing: -0.5px;">About Lapify Marketplace</h1>
+        <p class="lead mx-auto fs-5 text-muted" style="max-width: 680px; line-height: 1.8;">
+            A modern, direct laptop marketplace designed for seamless peer-to-peer buying and selling of new, certified, and pre-owned laptops.
         </p>
     </div>
 </div>
 
 <div class="container pb-5">
     <div class="row g-4 align-items-stretch mb-5">
-        <!-- Left Side: Peer-to-Peer Marketplace Card (Light Theme Black Text) -->
+        <!-- Left Side: Peer-to-Peer Marketplace Model Card -->
         <div class="col-lg-6">
-            <div class="card border-0 shadow-lg rounded-4 p-4 p-md-5 h-100" style="background: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #0f172a !important;">
-                <h2 class="fw-bold mb-3" style="color: #0f172a !important;">Direct Peer-to-Peer Marketplace Model</h2>
-                <p class="fs-6 mb-4" style="line-height: 1.85; color: #334155 !important;">
-                    Lapify eliminates middleman fees, commissions, and payment gateway hassles. Buyers and sellers connect directly to agree on price, inspection, and local pickup.
+            <div class="about-card">
+                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1.5 fw-bold" style="font-size: 0.78rem;">
+                        <i class="bi bi-arrows-angle-contract me-1"></i> Direct P2P Model
+                    </span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-bold" style="font-size: 0.78rem;">
+                        <i class="bi bi-percent me-1"></i> 0% Commission
+                    </span>
+                </div>
+
+                <h3 class="fw-bold mb-3 text-dark">Direct Peer-to-Peer Marketplace</h3>
+                <p class="fs-6 mb-4 text-muted" style="line-height: 1.8;">
+                    Lapify eliminates middleman markups and confusing commissions. Buyers and sellers connect directly to agree on price, inspect devices, and choose local pickup or Cash on Delivery.
                 </p>
-                <div class="row g-3 mt-auto">
-                    <div class="col-sm-6">
-                        <div class="p-4 rounded-4 h-100" style="background: #f8fafc; border: 1.5px solid #e2e8f0;">
-                            <i class="bi bi-shield-check text-success fs-2 mb-2 d-block"></i>
-                            <h5 class="fw-bold mb-2" style="color: #0f172a !important;">No Hidden Fees</h5>
-                            <p class="small mb-0" style="color: #475569 !important; line-height: 1.6;">List and contact sellers completely free of charge.</p>
+
+                <div class="d-flex flex-column gap-2.5 mb-4">
+                    <!-- Feature Row 1 -->
+                    <div class="about-feature-row">
+                        <div class="about-feature-icon bg-primary-subtle text-primary">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark mb-0.5">Zero Hidden Platform Fees</div>
+                            <div class="small text-muted">List your laptop, contact sellers, and complete inquiries completely free of charge.</div>
                         </div>
                     </div>
-                    <div class="col-sm-6">
-                        <div class="p-4 rounded-4 h-100" style="background: #f8fafc; border: 1.5px solid #e2e8f0;">
-                            <i class="bi bi-lightning-charge text-primary fs-2 mb-2 d-block"></i>
-                            <h5 class="fw-bold mb-2" style="color: #0f172a !important;">Instant Inquiry</h5>
-                            <p class="small mb-0" style="color: #475569 !important; line-height: 1.6;">Direct purchase flow with clear seller details and secure COD checkout.</p>
+
+                    <!-- Feature Row 2 -->
+                    <div class="about-feature-row">
+                        <div class="about-feature-icon bg-success-subtle text-success">
+                            <i class="bi bi-chat-dots-fill"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark mb-0.5">Direct Buyer-Seller Communication</div>
+                            <div class="small text-muted">Send inquiries, negotiate pricing, and clarify device condition before purchase.</div>
                         </div>
                     </div>
+
+                    <!-- Feature Row 3 -->
+                    <div class="about-feature-row">
+                        <div class="about-feature-icon bg-warning-subtle text-warning">
+                            <i class="bi bi-bag-check-fill"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark mb-0.5">Seamless COD & Local Handoff</div>
+                            <div class="small text-muted">Enjoy peace of mind with transparent checkout and convenient cash on delivery.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-auto pt-2">
+                    <a href="<?= BASE_URL ?>/sell.php" class="btn btn-outline-primary rounded-pill px-4 py-2.5 fw-bold w-100 d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>List Your Laptop for Free</span>
+                    </a>
                 </div>
             </div>
         </div>
 
-        <!-- Right Side: Technical Stack Card (Light Theme Black Text) -->
+        <!-- Right Side: Premium Laptop & Trust Showcase Card -->
         <div class="col-lg-6">
-            <div class="card border-0 shadow-lg rounded-4 p-4 p-md-5 h-100" style="background: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #0f172a !important;">
-                <h3 class="fw-bold mb-4" style="color: #0f172a !important;"><i class="bi bi-code-slash text-primary me-2"></i>Technical Stack Overview</h3>
-                <div class="d-flex flex-column gap-3">
-                    <div class="d-flex justify-content-between align-items-center pb-3 border-bottom border-slate-200">
-                        <span class="fw-semibold fs-6" style="color: #0f172a !important;">Frontend Layer</span>
-                        <span class="badge bg-primary text-white rounded-pill px-3 py-2 fs-7">HTML5, CSS3, Bootstrap 5.3, JS</span>
+            <div class="about-card">
+                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1.5 fw-bold" style="font-size: 0.78rem;">
+                        <i class="bi bi-laptop me-1"></i> Premier Tech Hub
+                    </span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1.5 fw-bold" style="font-size: 0.78rem;">
+                        <i class="bi bi-shield-check me-1"></i> 100% Verified
+                    </span>
+                </div>
+
+                <h3 class="fw-bold mb-3 text-dark">Find Your Next Powerhouse</h3>
+                <p class="fs-6 mb-3 text-muted" style="line-height: 1.8;">
+                    From top-tier creator workstations and high-FPS gaming rigs to lightweight student ultrabooks, Lapify provides verified benchmark specs and authentic condition reports.
+                </p>
+
+                <!-- Laptop Showcase Visual -->
+                <div class="position-relative rounded-4 p-3 mb-3 text-center overflow-hidden" style="background: rgba(255, 255, 255, 0.75); border: 1px solid rgba(56, 189, 248, 0.3); box-shadow: 0 4px 15px rgba(56, 189, 248, 0.08);">
+                    <img src="<?= BASE_URL ?>/uploads/laptops/MacBook%20Pro%2016%20M3%20Max.jpg" alt="Featured Laptop" class="img-fluid rounded-3" style="max-height: 160px; object-fit: contain; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.12));" onerror="this.src='<?= BASE_URL ?>/uploads/laptops/Asus%20ROG%20Zephyrus%20G16.jpg'">
+                </div>
+
+                <!-- Trust Points Grid -->
+                <div class="row g-2 mb-3">
+                    <div class="col-sm-6">
+                        <div class="about-trust-tile">
+                            <i class="bi bi-patch-check-fill text-success fs-5"></i>
+                            <span class="small fw-bold text-dark">Verified Hardware</span>
+                        </div>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center pb-3 border-bottom border-slate-200">
-                        <span class="fw-semibold fs-6" style="color: #0f172a !important;">Backend Engine</span>
-                        <span class="badge bg-success text-white rounded-pill px-3 py-2 fs-7">PHP 8 Procedural</span>
+                    <div class="col-sm-6">
+                        <div class="about-trust-tile">
+                            <i class="bi bi-cash-coin text-warning fs-5"></i>
+                            <span class="small fw-bold text-dark">Zero Commission</span>
+                        </div>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center pb-3 border-bottom border-slate-200">
-                        <span class="fw-semibold fs-6" style="color: #0f172a !important;">Database Engine</span>
-                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fs-7 fw-bold">MySQL via MySQLi</span>
+                    <div class="col-sm-6">
+                        <div class="about-trust-tile">
+                            <i class="bi bi-truck text-info fs-5"></i>
+                            <span class="small fw-bold text-dark">Direct COD Delivery</span>
+                        </div>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center pb-3 border-bottom border-slate-200">
-                        <span class="fw-semibold fs-6" style="color: #0f172a !important;">Security Model</span>
-                        <span class="badge bg-info text-dark rounded-pill px-3 py-2 fs-7 fw-bold">Prepared Statements & Bcrypt</span>
+                    <div class="col-sm-6">
+                        <div class="about-trust-tile">
+                            <i class="bi bi-headset text-primary fs-5"></i>
+                            <span class="small fw-bold text-dark">Dedicated Support</span>
+                        </div>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center pt-2">
-                        <span class="fw-semibold fs-6" style="color: #0f172a !important;">Database Tables</span>
-                        <span class="badge bg-secondary text-white rounded-pill px-3 py-2 fs-7">Exactly 5 Normalized Tables</span>
-                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <div class="mt-auto pt-2">
+                    <a href="<?= BASE_URL ?>/buy.php" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow w-100 d-flex align-items-center justify-content-center gap-2" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border: none;">
+                        <span>Explore Laptop Deals</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Meet the Team Section (Light Theme Black Text) -->
+    <!-- Meet the Team Section -->
     <div class="row mt-5">
+        <div class="col-12 mb-4 text-center text-md-start">
+            <div class="d-inline-flex align-items-center gap-2 mb-2 px-3 py-1 rounded-pill border bg-light">
+                <i class="bi bi-people-fill text-primary"></i>
+                <span class="small fw-bold text-dark">PROJECT TEAM</span>
+            </div>
+            <h3 class="fw-bold text-dark mb-1">Meet the Innovators Behind Lapify</h3>
+            <p class="text-muted small">Semester 5 Diploma Project Team at Darshan University</p>
+        </div>
+
         <div class="col-12">
-            <h3 class="fw-bold mb-4" style="color: #0f172a !important;">Meet the Team</h3>
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                 <?php
                 $team = [
-                    ['name' => 'Yash Kotak', 'email' => '24020201090@darshan.ac.in'],
-                    ['name' => 'Samiksha Gajera', 'email' => '24020201052@darshan.ac.in'],
-                    ['name' => 'Krisha Patel', 'email' => '24020201138@darshan.ac.in'],
-                    ['name' => 'Vedang Joshi', 'email' => '24020201072@darshan.ac.in'],
-                    ['name' => 'Prisha Vasavada', 'email' => '24020201170@darshan.ac.in'],
+                    ['name' => 'Yash Kotak', 'email' => '24020201090@darshan.ac.in', 'role' => 'Lead Developer & Architect'],
+                    ['name' => 'Samiksha Gajera', 'email' => '24020201052@darshan.ac.in', 'role' => 'UI/UX & Frontend Lead'],
+                    ['name' => 'Krisha Patel', 'email' => '24020201138@darshan.ac.in', 'role' => 'QA & Database Engineer'],
+                    ['name' => 'Vedang Joshi', 'email' => '24020201072@darshan.ac.in', 'role' => 'Backend & Auth Engineer'],
+                    ['name' => 'Prisha Vasavada', 'email' => '24020201170@darshan.ac.in', 'role' => 'Documentation & Testing'],
                 ];
                 function initials($name) {
                     $parts = explode(' ', trim($name));
@@ -93,14 +167,20 @@ require_once __DIR__ . '/includes/navbar.php';
                 ?>
                 <?php foreach ($team as $member): ?>
                     <div class="col">
-                        <div class="card p-4 shadow-sm rounded-4 h-100" style="background: #ffffff !important; border: 1px solid #e2e8f0 !important;">
+                        <div class="about-team-card h-100">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="avatar-placeholder rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width:58px;height:58px;font-size:18px;flex-shrink:0;box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);">
+                                <div class="about-team-avatar">
                                     <?= initials($member['name']) ?>
                                 </div>
-                                <div>
-                                    <div class="fw-semibold fs-6" style="color: #0f172a !important;"><?= escape($member['name']) ?></div>
-                                    <div class="small"><a href="mailto:<?= escape($member['email']) ?>" class="text-primary text-decoration-none fw-semibold"><?= escape($member['email']) ?></a></div>
+                                <div class="min-width-0 flex-grow-1">
+                                    <div class="fw-bold fs-6 text-dark mb-0.5 text-truncate"><?= escape($member['name']) ?></div>
+                                    <div class="badge bg-primary-subtle text-primary rounded-pill mb-1.5 px-2 py-0.5" style="font-size: 10px;"><?= escape($member['role']) ?></div>
+                                    <div>
+                                        <a href="mailto:<?= escape($member['email']) ?>" class="small text-muted text-decoration-none d-inline-flex align-items-center gap-1">
+                                            <i class="bi bi-envelope-fill text-primary"></i>
+                                            <span class="text-truncate" style="max-width: 170px;"><?= escape($member['email']) ?></span>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>

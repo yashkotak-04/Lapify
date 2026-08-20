@@ -87,18 +87,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_laptop'])) {
             }
 
             if (!isset($_SESSION['flash_error'])) {
-                $sqlIns = "INSERT INTO laptops (user_id, brand_id, type, model, processor, ram, storage, `condition`, price, description, image, quantity, status, approval_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending')";
+                // Ensure a valid user_id exists in the users table
+                $uid = 0;
+                $adminEmail = $current_admin['email'] ?? '';
+                if (!empty($adminEmail)) {
+                    $uCheck = mysqli_prepare($conn, "SELECT id FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1");
+                    mysqli_stmt_bind_param($uCheck, 's', $adminEmail);
+                    mysqli_stmt_execute($uCheck);
+                    $uRes = mysqli_stmt_get_result($uCheck);
+                    if ($uRow = mysqli_fetch_assoc($uRes)) {
+                        $uid = (int)$uRow['id'];
+                    }
+                    mysqli_stmt_close($uCheck);
+                }
+
+                if ($uid === 0 && !empty($current_admin['id'])) {
+                    $adminId = (int)$current_admin['id'];
+                    $uCheckId = mysqli_prepare($conn, "SELECT id FROM users WHERE id = ? LIMIT 1");
+                    mysqli_stmt_bind_param($uCheckId, 'i', $adminId);
+                    mysqli_stmt_execute($uCheckId);
+                    $uResId = mysqli_stmt_get_result($uCheckId);
+                    if ($uRowId = mysqli_fetch_assoc($uResId)) {
+                        $uid = (int)$uRowId['id'];
+                    }
+                    mysqli_stmt_close($uCheckId);
+                }
+
+                if ($uid === 0) {
+                    $adminName = $current_admin['full_name'] ?? 'Administrator';
+                    $adminEmail = !empty($current_admin['email']) ? $current_admin['email'] : 'admin@lapify.com';
+                    $adminPhone = $current_admin['phone'] ?? '';
+                    $tempPass = password_hash('Lapify@Admin123', PASSWORD_DEFAULT);
+                    $uIns = mysqli_prepare($conn, "INSERT INTO users (full_name, email, phone, password, role, status, created_at) VALUES (?, ?, ?, ?, 'admin', 'active', NOW())");
+                    mysqli_stmt_bind_param($uIns, 'ssss', $adminName, $adminEmail, $adminPhone, $tempPass);
+                    if (mysqli_stmt_execute($uIns)) {
+                        $uid = mysqli_insert_id($conn);
+                    } else {
+                        $fallback = mysqli_query($conn, "SELECT id FROM users LIMIT 1");
+                        if ($fbRow = mysqli_fetch_assoc($fallback)) {
+                            $uid = (int)$fbRow['id'];
+                        }
+                    }
+                    mysqli_stmt_close($uIns);
+                }
+
+                $sqlIns = "INSERT INTO laptops (user_id, brand_id, type, model, processor, ram, storage, `condition`, price, description, image, quantity, status, approval_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', 'approved')";
                 $ins = mysqli_prepare($conn, $sqlIns);
                 if ($ins === false) {
                     $err = mysqli_error($conn);
                     error_log("DB prepare failed (insert_laptop): {$err} SQL: {$sqlIns}");
                     setFlash('error', 'Database error while creating listing.');
                 } else {
-                    $uid = $current_admin['id'] ?? intval($_SESSION['user_id'] ?? 0);
                     $priceVal = $price;
                     mysqli_stmt_bind_param($ins, 'iissssssdssi', $uid, $brand_id, $type, $model, $processor, $ram, $storage, $condition, $priceVal, $description, $image_name, $quantity);
                     if (mysqli_stmt_execute($ins)) {
-                        setFlash('success', 'Laptop listing created.');
+                        setFlash('success', 'Laptop listing created and published successfully.');
                     } else {
                         $err = mysqli_stmt_error($ins);
                         error_log("DB execute failed (insert_laptop): {$err}");
@@ -187,6 +230,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_laptop'])) {
 $search = sanitizeInput($_GET['search'] ?? '');
 $brand_id = intval($_GET['brand'] ?? 0);
 $type = sanitizeInput($_GET['type'] ?? '');
+$per_page = intval($_GET['per_page'] ?? 15);
+if (!in_array($per_page, [10, 15, 25, 50, 100], true)) {
+    $per_page = 15;
+}
+$page = max(1, intval($_GET['page'] ?? 1));
 
 $where_clauses = ["1=1"];
 $params = [];
@@ -213,22 +261,51 @@ if (!empty($type) && in_array($type, ['New', 'Old'])) {
 
 $where_sql = implode(" AND ", $where_clauses);
 
+// Count total laptops
+$count_sql = "SELECT COUNT(*) 
+              FROM laptops l 
+              JOIN brands b ON l.brand_id = b.id 
+              JOIN users u ON l.user_id = u.id 
+              WHERE {$where_sql}";
+$count_stmt = mysqli_prepare($conn, $count_sql);
+if (!empty($param_types)) {
+    mysqli_stmt_bind_param($count_stmt, $param_types, ...$params);
+}
+mysqli_stmt_execute($count_stmt);
+mysqli_stmt_bind_result($count_stmt, $total_laptops);
+mysqli_stmt_fetch($count_stmt);
+mysqli_stmt_close($count_stmt);
+$total_laptops = (int)($total_laptops ?? 0);
+$total_pages = max(1, (int)ceil($total_laptops / $per_page));
+$page = min($page, $total_pages);
+$offset = ($page - 1) * $per_page;
+
 $sql = "SELECT l.*, b.brand_name, u.full_name AS seller_name 
         FROM laptops l 
         JOIN brands b ON l.brand_id = b.id 
         JOIN users u ON l.user_id = u.id 
         WHERE {$where_sql} 
-        ORDER BY l.id DESC";
+        ORDER BY l.id DESC
+        LIMIT ? OFFSET ?";
+
+$list_params = $params;
+$list_params[] = $per_page;
+$list_params[] = $offset;
+$list_types = $param_types . "ii";
 
 $stmt = mysqli_prepare($conn, $sql);
-if (!empty($param_types)) {
-    mysqli_stmt_bind_param($stmt, $param_types, ...$params);
-}
+mysqli_stmt_bind_param($stmt, $list_types, ...$list_params);
 mysqli_stmt_execute($stmt);
 $result = mysqli_stmt_get_result($stmt);
 
 // Brands list for dropdown
+$all_brands = [];
 $brands_list = mysqli_query($conn, "SELECT * FROM brands ORDER BY brand_name ASC");
+if ($brands_list) {
+    while ($b = mysqli_fetch_assoc($brands_list)) {
+        $all_brands[] = $b;
+    }
+}
 ?>
 
 <div class="dashboard-wrapper">
@@ -239,7 +316,7 @@ $brands_list = mysqli_query($conn, "SELECT * FROM brands ORDER BY brand_name ASC
         <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
             <div>
                 <h3 class="fw-bold mb-1"><i class="bi bi-laptop-fill text-primary me-2"></i>Laptop Listings Management</h3>
-                <p class="text-muted mb-0">Monitor, change status, and moderate all platform ads</p>
+                <p class="text-muted mb-0">Monitor, change status, and moderate all platform ads (<?= $total_laptops ?> total)</p>
             </div>
             <button type="button" class="btn btn-primary font-weight-bold rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addLaptopModal">
                 <i class="bi bi-plus-lg me-1"></i>Add Laptop
@@ -249,15 +326,15 @@ $brands_list = mysqli_query($conn, "SELECT * FROM brands ORDER BY brand_name ASC
         <!-- Filter Bar -->
         <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
             <form action="laptops.php" method="GET" class="row g-2 align-items-center">
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <input type="text" name="search" class="form-control form-control-sm" value="<?= escape($search) ?>" placeholder="Search model, seller name...">
                 </div>
                 <div class="col-md-3">
                     <select name="brand" class="form-select form-select-sm">
                         <option value="0">All Brands</option>
-                        <?php while ($b = mysqli_fetch_assoc($brands_list)): ?>
+                        <?php foreach ($all_brands as $b): ?>
                             <option value="<?= $b['id'] ?>" <?= $brand_id == $b['id'] ? 'selected' : '' ?>><?= escape($b['brand_name']) ?></option>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -268,6 +345,14 @@ $brands_list = mysqli_query($conn, "SELECT * FROM brands ORDER BY brand_name ASC
                     </select>
                 </div>
                 <div class="col-md-2">
+                    <select name="per_page" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="15" <?= $per_page == 15 ? 'selected' : '' ?>>15 per page</option>
+                        <option value="25" <?= $per_page == 25 ? 'selected' : '' ?>>25 per page</option>
+                        <option value="50" <?= $per_page == 50 ? 'selected' : '' ?>>50 per page</option>
+                        <option value="100" <?= $per_page == 100 ? 'selected' : '' ?>>100 per page</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
                     <button type="submit" class="btn btn-sm btn-primary w-100 font-weight-bold">Filter</button>
                 </div>
             </form>
@@ -276,83 +361,141 @@ $brands_list = mysqli_query($conn, "SELECT * FROM brands ORDER BY brand_name ASC
         <?php displayFlash(); ?>
 
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light text-muted small text-uppercase font-weight-bold">
-                            <tr>
-                                <th class="ps-4">Laptop Model</th>
-                                <th>Type</th>
-                                <th>Price</th>
-                                <th>Seller</th>
-                                <th>Status</th>
-                                <th class="text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if (mysqli_num_rows($result) > 0): ?>
-                                <?php while ($laptop = mysqli_fetch_assoc($result)): 
-                                    // Resolve laptop image using helper that handles DB filenames,
-                                    // slug-based candidates, and fuzzy matches in uploads.
-                                    $resolvedImg = getLaptopImageUrl($laptop);
-                                    $img_src = $resolvedImg ?: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=200&q=80';
-                                ?>
-                                    <tr>
-                                        <td class="ps-4">
-                                            <div class="d-flex align-items-center gap-3">
-                                                <img src="<?= escape($img_src) ?>" alt="" class="rounded-3" style="width: 50px; height: 38px; object-fit: cover;">
-                                                <div>
-                                                    <div class="fw-bold text-dark"><?= escape($laptop['model']) ?></div>
-                                                    <div class="small text-muted"><?= escape($laptop['brand_name']) ?></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="badge <?= $laptop['type'] === 'New' ? 'badge-type-new' : 'badge-type-old' ?>">
-                                                <?= escape($laptop['type']) ?>
+            <div class="card-body p-3.5 p-md-4">
+                <?php if ($total_laptops > 0): ?>
+                    <div class="d-flex align-items-center justify-content-between mb-3 px-1">
+                        <div class="text-muted small">
+                            Showing <strong class="text-dark"><?= $offset + 1 ?>–<?= min($offset + $per_page, $total_laptops) ?></strong> of <strong class="text-dark"><?= $total_laptops ?></strong> laptops
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column gap-3.5">
+                        <?php while ($laptop = mysqli_fetch_assoc($result)): 
+                            $resolvedImg = getLaptopImageUrl($laptop);
+                            $img_src = $resolvedImg ?: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=300&q=80';
+                            $is_new = (strtolower((string)($laptop['type'] ?? '')) === 'new');
+                            $listing_status = strtolower((string)($laptop['status'] ?? $laptop['approval_status'] ?? 'pending'));
+                        ?>
+                            <div class="posting-item-card p-3.5 p-md-4 rounded-4 border d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-4">
+                                <!-- Left: Thumbnail & Laptop Info -->
+                                <div class="d-flex align-items-center gap-3 gap-md-4" style="min-width: 0;">
+                                    <img src="<?= escape($img_src) ?>" alt="<?= escape($laptop['model']) ?>" loading="lazy" decoding="async" class="posting-thumb rounded-3 border flex-shrink-0 me-3" style="width: 76px; height: 56px; object-fit: cover;">
+                                    <div class="d-flex flex-column gap-1 ps-1" style="min-width: 0;">
+                                        <h5 class="fw-bold mb-0 text-dark posting-title text-truncate" style="font-size: 1.08rem;" title="<?= escape($laptop['model']) ?>">
+                                            <?= escape($laptop['model']) ?>
+                                        </h5>
+                                        <div class="d-flex flex-wrap align-items-center gap-2 text-muted small" style="font-size: 0.85rem;">
+                                            <span class="fw-semibold text-secondary"><i class="bi bi-tag-fill text-primary me-1"></i><?= escape($laptop['brand_name'] ?? 'Laptop') ?></span>
+                                            <span class="text-slate-300">•</span>
+                                            <span class="text-dark fw-medium"><i class="bi bi-person-fill text-primary me-1"></i><?= escape($laptop['seller_name'] ?? 'Seller') ?></span>
+                                            <span class="text-slate-300">•</span>
+                                            <span class="badge rounded-pill px-2.5 py-1 <?= $is_new ? 'bg-primary-subtle text-primary' : 'bg-secondary-subtle text-secondary' ?>" style="font-size: 0.72rem; font-weight: 600;">
+                                                <?= $is_new ? 'Brand New' : 'Pre-Owned' ?>
                                             </span>
-                                        </td>
-                                        <td class="fw-bold text-primary"><?= formatPrice($laptop['price']) ?></td>
-                                        <td class="small text-secondary"><?= escape($laptop['seller_name']) ?></td>
-                                        <td>
-                                            <?php $listing_status = strtolower((string)($laptop['status'] ?? $laptop['approval_status'] ?? 'pending')); ?>
-                                            <div class="dropdown">
-                                                <button class="btn btn-sm dropdown-toggle rounded-pill border-0 <?= $listing_status === 'approved' ? 'bg-success-subtle text-success fw-bold' : ($listing_status === 'rejected' ? 'bg-danger-subtle text-danger fw-bold' : 'bg-warning-subtle text-warning fw-bold') ?>" type="button" data-bs-toggle="dropdown">
-                                                    <?= escape(ucfirst($listing_status)) ?>
-                                                </button>
-                                                <ul class="dropdown-menu shadow-sm border-0 small">
-                                                    <li><a class="dropdown-item" href="laptops.php?action=status&id=<?= $laptop['id'] ?>&status=pending">Pending</a></li>
-                                                    <li><a class="dropdown-item" href="laptops.php?action=status&id=<?= $laptop['id'] ?>&status=approved">Approved</a></li>
-                                                    <li><a class="dropdown-item" href="laptops.php?action=status&id=<?= $laptop['id'] ?>&status=rejected">Rejected</a></li>
-                                                </ul>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="d-inline-flex align-items-center justify-content-center gap-2">
-                                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editLaptopModal" data-laptop-id="<?= $laptop['id'] ?>" data-brand-id="<?= $laptop['brand_id'] ?>" data-type="<?= escape($laptop['type']) ?>" data-model="<?= escape($laptop['model']) ?>" data-processor="<?= escape($laptop['processor'] ?? '') ?>" data-ram="<?= escape($laptop['ram'] ?? '') ?>" data-storage="<?= escape($laptop['storage'] ?? '') ?>" data-condition="<?= escape($laptop['condition'] ?? '') ?>" data-price="<?= (float) $laptop['price'] ?>" data-description="<?= escape($laptop['description'] ?? '') ?>" data-quantity="<?= (int) $laptop['quantity'] ?>" title="Edit Listing">
-                                                    <i class="bi bi-pencil-square"></i> Edit
-                                                </button>
-                                                <a href="<?= BASE_URL ?>/laptop-details.php?id=<?= $laptop['id'] ?>" class="btn btn-sm btn-light" target="_blank" title="View"><i class="bi bi-eye"></i></a>
-                                                <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                        data-bs-toggle="modal" data-bs-target="#deleteConfirmModal" 
-                                                        data-id="<?= $laptop['id'] ?>" 
-                                                        data-title="<?= escape($laptop['model']) ?>" 
-                                                        data-delete-url="laptops.php?action=delete&id=<?= $laptop['id'] ?>" 
-                                                        title="Delete Listing">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">No laptop listings found.</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
+                                            <?php if (!empty($laptop['condition'])): ?>
+                                                <span class="text-slate-300">•</span>
+                                                <span class="text-slate-600"><?= escape($laptop['condition']) ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right: Price, Status, and Actions with generous spacing -->
+                                <div class="d-flex flex-wrap align-items-center justify-content-between justify-content-lg-end gap-4 ms-lg-auto flex-shrink-0">
+                                    <!-- Price -->
+                                    <div class="text-start text-lg-end">
+                                        <div class="fw-bold text-primary" style="font-size: 1.25rem;">
+                                            <?= formatPrice($laptop['price']) ?>
+                                        </div>
+                                    </div>
+
+                                    <!-- Status Select (Clean, Non-Overlapping) -->
+                                    <?php
+                                    $status_slug = in_array($listing_status, ['approved', 'active']) ? 'approved' : ($listing_status === 'rejected' ? 'rejected' : 'pending');
+                                    ?>
+                                    <div class="d-inline-block">
+                                        <select class="status-select-pill status-select-<?= $status_slug ?>" onchange="location.href='laptops.php?action=status&id=<?= $laptop['id'] ?>&status=' + this.value;" title="Change Listing Status">
+                                            <option value="pending" <?= $status_slug === 'pending' ? 'selected' : '' ?>>Pending</option>
+                                            <option value="approved" <?= $status_slug === 'approved' ? 'selected' : '' ?>>Approved</option>
+                                            <option value="rejected" <?= $status_slug === 'rejected' ? 'selected' : '' ?>>Rejected</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Action Buttons with generous spacing -->
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button type="button" class="btn btn-outline-primary rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-2 shadow-2xs" data-bs-toggle="modal" data-bs-target="#editLaptopModal" data-laptop-id="<?= $laptop['id'] ?>" data-brand-id="<?= $laptop['brand_id'] ?>" data-type="<?= escape($laptop['type']) ?>" data-model="<?= escape($laptop['model']) ?>" data-processor="<?= escape($laptop['processor'] ?? '') ?>" data-ram="<?= escape($laptop['ram'] ?? '') ?>" data-storage="<?= escape($laptop['storage'] ?? '') ?>" data-condition="<?= escape($laptop['condition'] ?? '') ?>" data-price="<?= (float) $laptop['price'] ?>" data-description="<?= escape($laptop['description'] ?? '') ?>" data-quantity="<?= (int) $laptop['quantity'] ?>" title="Edit Listing">
+                                            <i class="bi bi-pencil-square"></i>
+                                            <span>Edit</span>
+                                        </button>
+                                        <a href="<?= BASE_URL ?>/laptop-details.php?id=<?= $laptop['id'] ?>" class="btn btn-light border rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;" target="_blank" title="View Listing">
+                                            <i class="bi bi-eye text-secondary"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-light border text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;"
+                                                data-bs-toggle="modal" data-bs-target="#deleteConfirmModal" 
+                                                data-id="<?= $laptop['id'] ?>" 
+                                                data-title="<?= escape($laptop['model']) ?>" 
+                                                data-delete-url="laptops.php?action=delete&id=<?= $laptop['id'] ?>" 
+                                                title="Delete Listing">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
+
+                    <?php if ($total_pages > 1): ?>
+                        <nav class="mt-4 d-flex justify-content-center" aria-label="Laptops pagination">
+                            <ul class="pagination pagination-sm gap-1">
+                                <?php
+                                $query_params = [
+                                    'search' => $search,
+                                    'brand' => $brand_id > 0 ? $brand_id : '',
+                                    'type' => $type,
+                                    'per_page' => $per_page,
+                                ];
+                                $query_params = array_filter($query_params, fn($v) => $v !== '' && $v !== null && $v !== 0);
+                                
+                                $prev_url = 'laptops.php?' . http_build_query(array_merge($query_params, ['page' => max(1, $page - 1)]));
+                                $next_url = 'laptops.php?' . http_build_query(array_merge($query_params, ['page' => min($total_pages, $page + 1)]));
+                                ?>
+                                <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+                                    <a class="page-link rounded-3" href="<?= $prev_url ?>"><i class="bi bi-chevron-left me-1"></i>Previous</a>
+                                </li>
+                                <?php 
+                                $start_p = max(1, $page - 2);
+                                $end_p = min($total_pages, $page + 2);
+                                if ($start_p > 1) {
+                                    echo '<li class="page-item"><a class="page-link rounded-3" href="laptops.php?' . http_build_query(array_merge($query_params, ['page' => 1])) . '">1</a></li>';
+                                    if ($start_p > 2) echo '<li class="page-item disabled"><span class="page-link border-0">…</span></li>';
+                                }
+                                for ($p = $start_p; $p <= $end_p; $p++): 
+                                    $p_url = 'laptops.php?' . http_build_query(array_merge($query_params, ['page' => $p]));
+                                ?>
+                                    <li class="page-item <?= $page === $p ? 'active' : '' ?>">
+                                        <a class="page-link rounded-3 <?= $page === $p ? 'fw-bold' : '' ?>" href="<?= $p_url ?>"><?= $p ?></a>
+                                    </li>
+                                <?php endfor; 
+                                if ($end_p < $total_pages) {
+                                    if ($end_p < $total_pages - 1) echo '<li class="page-item disabled"><span class="page-link border-0">…</span></li>';
+                                    echo '<li class="page-item"><a class="page-link rounded-3" href="laptops.php?' . http_build_query(array_merge($query_params, ['page' => $total_pages])) . '">' . $total_pages . '</a></li>';
+                                }
+                                ?>
+                                <li class="page-item <?= $page >= $total_pages ? 'disabled' : '' ?>">
+                                    <a class="page-link rounded-3" href="<?= $next_url ?>">Next<i class="bi bi-chevron-right ms-1"></i></a>
+                                </li>
+                            </ul>
+                        </nav>
+                    <?php endif; ?>
+
+                <?php else: ?>
+                    <div class="text-center py-5 px-4">
+                        <div class="bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                            <i class="bi bi-laptop fs-2"></i>
+                        </div>
+                        <h5 class="fw-bold mb-1">No Laptop Listings Found</h5>
+                        <p class="text-muted small mb-0">Try changing your search or filter parameters.</p>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -373,9 +516,9 @@ $brands_list = mysqli_query($conn, "SELECT * FROM brands ORDER BY brand_name ASC
                             <label for="add_brand_id" class="form-label font-weight-bold">Brand <span class="text-danger">*</span></label>
                             <select name="brand_id" id="add_brand_id" class="form-select" required>
                                 <option value="">Select brand</option>
-                                <?php mysqli_data_seek($brands_list, 0); while ($b = mysqli_fetch_assoc($brands_list)): ?>
+                                <?php foreach ($all_brands as $b): ?>
                                     <option value="<?= $b['id'] ?>"><?= escape($b['brand_name']) ?></option>
-                                <?php endwhile; ?>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -448,9 +591,9 @@ $brands_list = mysqli_query($conn, "SELECT * FROM brands ORDER BY brand_name ASC
                             <label for="edit_brand_id" class="form-label font-weight-bold">Brand <span class="text-danger">*</span></label>
                             <select name="brand_id" id="edit_brand_id" class="form-select" required>
                                 <option value="">Select brand</option>
-                                <?php mysqli_data_seek($brands_list, 0); while ($b = mysqli_fetch_assoc($brands_list)): ?>
+                                <?php foreach ($all_brands as $b): ?>
                                     <option value="<?= $b['id'] ?>"><?= escape($b['brand_name']) ?></option>
-                                <?php endwhile; ?>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-6">

@@ -27,6 +27,7 @@ $admin_title = $admin_title ?? 'Admin Panel | Lapify';
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/style.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/dashboard.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/auth-theme.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/auth.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/transitions.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/premium-system.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/brand-cards.css">

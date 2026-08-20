@@ -3,19 +3,33 @@
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../includes/functions.php';
 
-$_SESSION = array();
-
-if (ini_get("session.use_cookies")) {
-    $params = session_get_cookie_params();
-    setcookie(session_name(), '', time() - 42000,
-        $params["path"], $params["domain"],
-        $params["secure"], $params["httponly"]
-    );
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
-session_destroy();
+// Clear remember me cookie
+if (isset($_COOKIE['lapify_remember'])) {
+    setcookie('lapify_remember', '', time() - 3600, '/', '', true, true);
+}
 
-session_start();
-setFlash('info', "Logged out from Admin Panel.");
-header("Location: " . BASE_URL . "/admin/login.php");
+// Clear all admin and user session keys completely
+unset(
+    $_SESSION['admin_id'],
+    $_SESSION['admin_logged_in'],
+    $_SESSION['admin_username'],
+    $_SESSION['admin_name'],
+    $_SESSION['admin_email'],
+    $_SESSION['user_id'],
+    $_SESSION['full_name'],
+    $_SESSION['email'],
+    $_SESSION['phone'],
+    $_SESSION['role'],
+    $_SESSION['cart']
+);
+
+// Set success logout toast message (Green popup)
+setFlash('success', "Logged out from Admin Panel successfully.");
+
+// Redirect to Home / Index page
+header("Location: " . BASE_URL . "/index.php");
 exit();

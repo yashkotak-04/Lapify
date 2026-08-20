@@ -1,9 +1,9 @@
 <?php
-$page_title = 'Create Account | Lapify';
-$body_class = 'auth-page';
-require_once __DIR__ . '/includes/header.php';
-require_once __DIR__ . '/includes/auth.php';
+// register.php - User Registration
+require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/functions.php';
 
 redirectIfLoggedIn();
 
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'status' => 'active',
             ]);
 
-            setFlash('success', 'Account created successfully. Please sign in to continue.');
+            setFlash('success', 'Account created successfully! Welcome to Lapify, ' . $full_name . '. Please sign in.');
             header('Location: ' . BASE_URL . '/login.php?registered=1&email=' . urlencode($email));
             exit();
         } catch (Throwable $e) {
@@ -80,7 +80,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Registration failed. Please try again.';
         }
     }
+
+    if (!empty($errors)) {
+        setFlash('error', $errors[0]);
+    }
 }
+
+$page_title = 'Create Account | Lapify';
+$body_class = 'auth-page';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="auth-shell auth-shell-register">

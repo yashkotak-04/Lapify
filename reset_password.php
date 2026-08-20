@@ -1,9 +1,9 @@
 <?php
-$page_title = 'Reset Password | Lapify';
-$body_class = 'auth-page';
-require_once __DIR__ . '/includes/header.php';
-require_once __DIR__ . '/includes/auth.php';
+// reset_password.php - Password Reset Execution
+require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/functions.php';
 
 redirectIfLoggedIn();
 
@@ -88,6 +88,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $targetAccount) {
         }
     }
 }
+
+$page_title = 'Reset Password | Lapify';
+$body_class = 'auth-page';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="auth-shell">

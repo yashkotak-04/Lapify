@@ -1,14 +1,176 @@
 /* ============================================================
    Lapify Premium Page Transition System
-   Centralized overlay + loader + navigation animations.
+   Centralized top progress bar + overlay + loader + navigation animations.
    Works in both Light and Dark mode.
    ============================================================ */
 
-/* ---------- Page Transition Overlay (glassmorphism) ---------- */
+/* ---------- Top Progress Bar (Sleek SPA-like top loader) ---------- */
+#lapify-top-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0%;
+  z-index: 100000;
+  pointer-events: none;
+  background: linear-gradient(90deg, #38bdf8 0%, #2563eb 50%, #60a5fa 100%);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 4px #2563eb;
+  transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  opacity: 0;
+}
+
+#lapify-top-progress.active {
+  opacity: 1;
+}
+
+#lapify-top-progress.completed {
+  width: 100% !important;
+  opacity: 0;
+  transition: width 0.15s ease, opacity 0.35s ease 0.1s;
+}
+
+/* ---------- Page Entrance & Leaving Animation ---------- */
+body:not(.auth-page) main {
+  animation: lapifyPageEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Admin Panel Page Entrance */
+body.admin-panel-body .dashboard-content {
+  animation: lapifyAdminPageEnter 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity, transform;
+}
+
+body.auth-page .auth-card {
+  animation: authCardIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+body.lapify-page-leaving main {
+  opacity: 0.2;
+  transform: translateY(-4px) scale(0.995);
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Admin Panel Page Exit (Silky SPA-like transition) */
+body.admin-panel-body.lapify-page-leaving .dashboard-content {
+  opacity: 0.35;
+  transform: translateY(-6px) scale(0.996);
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+body.lapify-page-leaving.auth-page .auth-card,
+body.lapify-page-leaving .auth-card {
+  opacity: 0;
+  transform: translateY(6px) scale(0.985);
+  transition: opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes lapifyPageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lapifyAdminPageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.998);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ---------- High-End Spring / Pop-In Modal Animations & Glassmorphism Backdrop ---------- */
+.modal {
+  z-index: 1060 !important;
+}
+
+.modal.fade .modal-dialog {
+  transform: scale(0.92) translateY(24px) !important;
+  opacity: 0 !important;
+  filter: blur(4px);
+  transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  will-change: transform, opacity, filter;
+}
+
+.modal.show .modal-dialog {
+  transform: scale(1) translateY(0) !important;
+  opacity: 1 !important;
+  filter: blur(0px) !important;
+}
+
+.modal-backdrop {
+  z-index: 1050 !important;
+  background-color: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.modal-backdrop.fade {
+  opacity: 0;
+}
+
+.modal-backdrop.show {
+  opacity: 1 !important;
+}
+
+/* Modal Content Glassmorphism & Elevation */
+.modal-content {
+  border-radius: 1.25rem !important;
+  box-shadow: 0 25px 60px -12px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] .modal-content {
+  background: #0f172a !important;
+  border: 1px solid rgba(56, 189, 248, 0.25) !important;
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(56, 189, 248, 0.15) !important;
+}
+
+/* Staggered Content Reveal when Modal is shown */
+.modal.show .modal-header {
+  animation: lapifyModalElementIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.modal.show .modal-body {
+  animation: lapifyModalElementIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 0.04s;
+}
+
+.modal.show .modal-footer {
+  animation: lapifyModalElementIn 0.48s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 0.08s;
+}
+
+@keyframes lapifyModalElementIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* ---------- Page Transition Overlay (glassmorphism for heavy actions) ---------- */
 #page-transition-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 99999;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,9 +178,9 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.28s ease, visibility 0.28s ease;
-  background: rgba(15, 23, 42, 0.35);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 #page-transition-overlay.active {
@@ -35,12 +197,12 @@
   gap: 1rem;
   padding: 2rem 2.5rem;
   border-radius: 20px;
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.92) 35%, rgba(37, 99, 235, 0.92) 100%);
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.94) 35%, rgba(37, 99, 235, 0.94) 100%);
   box-shadow: 0 25px 60px rgba(15, 23, 42, 0.4), 0 8px 20px rgba(2, 6, 23, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   transform: scale(0.92);
   opacity: 0;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
 }
 
 #page-transition-overlay.active .lapify-loader {
@@ -50,11 +212,11 @@
 
 /* ---------- Spinner (gradient ring) ---------- */
 .lapify-spinner {
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   border: 3px solid rgba(255, 255, 255, 0.15);
-  border-top-color: #60a5fa;
+  border-top-color: #38bdf8;
   border-right-color: #ffffff;
   animation: lapifySpin 0.8s linear infinite;
 }
@@ -72,45 +234,45 @@
   text-shadow: 0 2px 8px rgba(2, 6, 23, 0.3);
 }
 
-/* ---------- Page Content Entrance Animation ---------- */
-body.lapify-transitioning main {
-  animation: lapifyPageIn 0.35s ease-out both;
-}
-
-@keyframes lapifyPageIn {
-  from {
-    opacity: 0.85;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* ---------- Auth Submit Button Loading State ---------- */
 .auth-btn.loading {
   pointer-events: none;
-  opacity: 0.75;
+  opacity: 0.85;
   position: relative;
+  cursor: wait !important;
 }
 
 .auth-btn.loading .btn-spinner {
   display: inline-block;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   margin-right: 0.5rem;
   vertical-align: middle;
   border-radius: 50%;
-  border: 2px solid rgba(15, 23, 42, 0.2);
-  border-top-color: #0f172a;
-  animation: lapifySpin 0.7s linear infinite;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  animation: lapifySpin 0.65s linear infinite;
 }
 
-/* ---------- Generic Button Loading (for non-auth forms) ---------- */
-.btn.loading {
+/* ---------- Generic Button Loading ---------- */
+.btn.loading,
+.btn-checkout.loading {
   pointer-events: none;
-  opacity: 0.75;
+  opacity: 0.85;
+  cursor: wait !important;
+}
+
+.btn.loading .btn-spinner,
+.btn-checkout.loading .btn-spinner {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  margin-right: 0.45rem;
+  vertical-align: middle;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: lapifySpin 0.65s linear infinite;
 }
 
 /* ---------- Reduced Motion Support ---------- */
@@ -118,18 +280,31 @@ body.lapify-transitioning main {
   #page-transition-overlay,
   .lapify-loader,
   .lapify-spinner,
-  body.lapify-transitioning main {
+  #lapify-top-progress,
+  body:not(.auth-page) main,
+  body.admin-panel-body .dashboard-content,
+  body.auth-page .auth-card,
+  .modal.fade .modal-dialog,
+  .modal.show .modal-dialog,
+  .modal-backdrop,
+  .modal-content,
+  .modal.show .modal-header,
+  .modal.show .modal-body,
+  .modal.show .modal-footer {
     transition: none !important;
     animation: none !important;
+    transform: none !important;
+    filter: none !important;
   }
 }
 
+
 /* ---------- Dark Mode Overrides ---------- */
 [data-theme="dark"] #page-transition-overlay {
-  background: rgba(2, 6, 23, 0.5);
+  background: rgba(2, 6, 23, 0.65);
 }
 
 [data-theme="dark"] .lapify-loader {
-  background: linear-gradient(145deg, rgba(2, 6, 23, 0.95) 0%, rgba(15, 23, 42, 0.95) 35%, rgba(37, 99, 235, 0.9) 100%);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(145deg, rgba(2, 6, 23, 0.96) 0%, rgba(15, 23, 42, 0.96) 35%, rgba(37, 99, 235, 0.92) 100%);
+  border-color: rgba(56, 189, 248, 0.3);
 }

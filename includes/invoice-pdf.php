@@ -160,6 +160,7 @@ function generateInvoicePdf($order, $customer, $items, $filename = null) {
         $downloadName = $filename ?: 'invoice-' . ($order['order_number'] ?? 'order') . '.pdf';
         header('Content-Type: application/pdf');
         header('Content-Disposition: attachment; filename="' . basename($downloadName) . '"');
+        header('Access-Control-Expose-Headers: Content-Disposition');
         header('Cache-Control: private, max-age=0, must-revalidate');
         header('Pragma: public');
         echo $dompdf->output();
@@ -169,6 +170,7 @@ function generateInvoicePdf($order, $customer, $items, $filename = null) {
     $downloadName = $filename ?: 'invoice-' . ($order['order_number'] ?? 'order') . '.html';
     header('Content-Type: text/html; charset=UTF-8');
     header('Content-Disposition: attachment; filename="' . basename($downloadName) . '"');
+    header('Access-Control-Expose-Headers: Content-Disposition');
     echo $html;
     exit;
 }

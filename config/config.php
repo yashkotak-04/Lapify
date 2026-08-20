@@ -36,8 +36,7 @@ define('APP_TAGLINE', 'Buy New, Buy Used, & Sell Laptops Safely');
 
 // Base URL configuration (auto-detect or fallback)
 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
-$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-$host = preg_replace('/:\d+$/', '', trim($host, ". "));
+$host = trim($_SERVER['HTTP_HOST'] ?? 'localhost', ". ");
 if ($host === '') {
     $host = 'localhost';
 }

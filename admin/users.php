@@ -38,16 +38,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_user'])) {
                         setFlash('error', 'That email is already assigned to an admin account.');
                     } else {
                         $password_hash = password_hash($password, PASSWORD_DEFAULT);
-                        $userStmt = mysqli_prepare($conn, "INSERT INTO users (full_name, email, phone, password, profile_image, created_at) VALUES (?, ?, ?, ?, NULL, NOW())");
-                        mysqli_stmt_bind_param($userStmt, 'ssss', $full_name, $email, $phone, $password_hash);
+                        $role = $is_admin ? 'admin' : 'user';
+                        $userStmt = mysqli_prepare($conn, "INSERT INTO users (full_name, email, phone, password, role, status, profile_image, created_at) VALUES (?, ?, ?, ?, ?, 'active', NULL, NOW())");
+                        mysqli_stmt_bind_param($userStmt, 'sssss', $full_name, $email, $phone, $password_hash, $role);
                         if (mysqli_stmt_execute($userStmt)) {
                             $newUserId = mysqli_insert_id($conn);
-                            $adminStmt = mysqli_prepare($conn, "INSERT INTO admins (username, full_name, email, password, secret_key, status) VALUES (?, ?, ?, ?, '', 'active')");
-                            $adminUser = $full_name ?: $email;
-                            $adminPasswordHash = password_hash($password, PASSWORD_DEFAULT);
-                            mysqli_stmt_bind_param($adminStmt, 'ssss', $adminUser, $full_name, $email, $adminPasswordHash);
-                            mysqli_stmt_execute($adminStmt);
-                            mysqli_stmt_close($adminStmt);
+                            if ($is_admin) {
+                                $adminStmt = mysqli_prepare($conn, "INSERT INTO admins (username, full_name, email, password, secret_key, status) VALUES (?, ?, ?, ?, '', 'active')");
+                                $adminUser = $full_name ?: $email;
+                                $adminPasswordHash = password_hash($password, PASSWORD_DEFAULT);
+                                mysqli_stmt_bind_param($adminStmt, 'ssss', $adminUser, $full_name, $email, $adminPasswordHash);
+                                mysqli_stmt_execute($adminStmt);
+                                mysqli_stmt_close($adminStmt);
+                            }
                             setFlash('success', 'User added successfully.');
                         } else {
                             setFlash('error', 'Failed to create user account.');
@@ -57,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_user'])) {
                     mysqli_stmt_close($adminCheck);
                 } else {
                     $password_hash = password_hash($password, PASSWORD_DEFAULT);
-                    $userStmt = mysqli_prepare($conn, "INSERT INTO users (full_name, email, phone, password, profile_image, created_at) VALUES (?, ?, ?, ?, NULL, NOW())");
+                    $userStmt = mysqli_prepare($conn, "INSERT INTO users (full_name, email, phone, password, role, status, profile_image, created_at) VALUES (?, ?, ?, ?, 'user', 'active', NULL, NOW())");
                     mysqli_stmt_bind_param($userStmt, 'ssss', $full_name, $email, $phone, $password_hash);
                     if (mysqli_stmt_execute($userStmt)) {
                         setFlash('success', 'User added successfully.');
@@ -111,16 +114,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
                     mysqli_stmt_close($adminStmt);
                 }
 
-                if (!$is_admin) {
+                if (!$is_admin && $adminExists) {
                     $removeAdminStmt = mysqli_prepare($conn, "DELETE FROM admins WHERE LOWER(email) = LOWER(?)");
                     mysqli_stmt_bind_param($removeAdminStmt, 's', $email);
                     mysqli_stmt_execute($removeAdminStmt);
                     mysqli_stmt_close($removeAdminStmt);
                 }
 
-                $updateSql = "UPDATE users SET full_name = ?, email = ?, phone = ?";
-                $params = [$full_name, $email, $phone];
-                $types = 'sss';
+                $role = $is_admin ? 'admin' : 'user';
+                $updateSql = "UPDATE users SET full_name = ?, email = ?, phone = ?, role = ?";
+                $params = [$full_name, $email, $phone, $role];
+                $types = 'ssss';
                 if ($password !== '') {
                     $updateSql .= ", password = ?";
                     $params[] = password_hash($password, PASSWORD_DEFAULT);
@@ -167,15 +171,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
 if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
     $target_user_id = intval($_GET['id']);
 
-    if ($target_user_id === $current_admin['id']) {
+    $u_stmt = mysqli_prepare($conn, "SELECT email, profile_image FROM users WHERE id = ?");
+    mysqli_stmt_bind_param($u_stmt, "i", $target_user_id);
+    mysqli_stmt_execute($u_stmt);
+    $u_res = mysqli_stmt_get_result($u_stmt);
+    $targetUser = mysqli_fetch_assoc($u_res);
+    mysqli_stmt_close($u_stmt);
+
+    if (!$targetUser) {
+        setFlash('error', "User not found.");
+    } elseif ($target_user_id === (int)($current_admin['id'] ?? 0) || strtolower($targetUser['email']) === strtolower($current_admin['email'] ?? '')) {
         setFlash('error', "You cannot delete your own active administrator account.");
     } else {
-        $u_stmt = mysqli_prepare($conn, "SELECT profile_image FROM users WHERE id = ?");
-        mysqli_stmt_bind_param($u_stmt, "i", $target_user_id);
-        mysqli_stmt_execute($u_stmt);
-        mysqli_stmt_bind_result($u_stmt, $profile_img);
-        mysqli_stmt_fetch($u_stmt);
-        mysqli_stmt_close($u_stmt);
+        $profile_img = $targetUser['profile_image'];
+
+        // Clean up corresponding admin record if exists
+        $delAdmin = mysqli_prepare($conn, "DELETE FROM admins WHERE LOWER(email) = LOWER(?)");
+        mysqli_stmt_bind_param($delAdmin, "s", $targetUser['email']);
+        mysqli_stmt_execute($delAdmin);
+        mysqli_stmt_close($delAdmin);
 
         $l_stmt = mysqli_prepare($conn, "SELECT image FROM laptops WHERE user_id = ?");
         mysqli_stmt_bind_param($l_stmt, "i", $target_user_id);
@@ -202,22 +216,51 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
 }
 
 $search = sanitizeInput($_GET['search'] ?? '');
+$per_page = intval($_GET['per_page'] ?? 15);
+if (!in_array($per_page, [10, 15, 25, 50, 100], true)) {
+    $per_page = 15;
+}
+$page = max(1, intval($_GET['page'] ?? 1));
+
 $where_sql = "1=1";
 $params = [];
 $param_types = "";
 
 if (!empty($search)) {
-    $where_sql .= " AND (full_name LIKE ? OR email LIKE ? OR phone LIKE ?)";
+    $where_sql .= " AND (u.full_name LIKE ? OR u.email LIKE ? OR u.phone LIKE ?)";
     $s = "%{$search}%";
     $params = [$s, $s, $s];
     $param_types = "sss";
 }
 
-$sql = "SELECT u.*, CASE WHEN a.email IS NOT NULL THEN 'admin' ELSE 'user' END AS role FROM users u LEFT JOIN admins a ON u.email = a.email WHERE {$where_sql} ORDER BY u.id DESC";
-$stmt = mysqli_prepare($conn, $sql);
+$count_sql = "SELECT COUNT(*) FROM users u WHERE {$where_sql}";
+$count_stmt = mysqli_prepare($conn, $count_sql);
 if (!empty($param_types)) {
-    mysqli_stmt_bind_param($stmt, $param_types, ...$params);
+    mysqli_stmt_bind_param($count_stmt, $param_types, ...$params);
 }
+mysqli_stmt_execute($count_stmt);
+mysqli_stmt_bind_result($count_stmt, $total_users);
+mysqli_stmt_fetch($count_stmt);
+mysqli_stmt_close($count_stmt);
+$total_users = (int)($total_users ?? 0);
+$total_pages = max(1, (int)ceil($total_users / $per_page));
+$page = min($page, $total_pages);
+$offset = ($page - 1) * $per_page;
+
+$sql = "SELECT u.*, CASE WHEN a.email IS NOT NULL THEN 'admin' ELSE 'user' END AS role 
+        FROM users u 
+        LEFT JOIN admins a ON u.email = a.email 
+        WHERE {$where_sql} 
+        ORDER BY u.id DESC
+        LIMIT ? OFFSET ?";
+
+$list_params = $params;
+$list_params[] = $per_page;
+$list_params[] = $offset;
+$list_types = $param_types . "ii";
+
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, $list_types, ...$list_params);
 mysqli_stmt_execute($stmt);
 $users_result = mysqli_stmt_get_result($stmt);
 ?>
@@ -230,81 +273,149 @@ $users_result = mysqli_stmt_get_result($stmt);
         <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
             <div>
                 <h3 class="fw-bold mb-1"><i class="bi bi-people-fill text-primary me-2"></i>User Management</h3>
-                <p class="text-muted mb-0">View, search, and manage registered Lapify accounts</p>
+                <p class="text-muted mb-0">View, search, and manage registered Lapify accounts (<?= $total_users ?> total)</p>
             </div>
             <button type="button" class="btn btn-primary font-weight-bold rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addUserModal">
                 <i class="bi bi-plus-lg me-1"></i>Add User
             </button>
         </div>
 
+        <!-- Filter Bar -->
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+            <form action="users.php" method="GET" class="row g-2 align-items-center">
+                <div class="col-md-7">
+                    <input type="text" name="search" class="form-control form-control-sm" value="<?= escape($search) ?>" placeholder="Search name, email, phone...">
+                </div>
+                <div class="col-md-3">
+                    <select name="per_page" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="15" <?= $per_page == 15 ? 'selected' : '' ?>>15 per page</option>
+                        <option value="25" <?= $per_page == 25 ? 'selected' : '' ?>>25 per page</option>
+                        <option value="50" <?= $per_page == 50 ? 'selected' : '' ?>>50 per page</option>
+                        <option value="100" <?= $per_page == 100 ? 'selected' : '' ?>>100 per page</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-sm btn-primary w-100 font-weight-bold">Filter</button>
+                </div>
+            </form>
+        </div>
+
         <?php displayFlash(); ?>
 
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light text-muted small text-uppercase font-weight-bold">
-                            <tr>
-                                <th>User Profile</th>
-                                <th>Phone</th>
-                                <th>Role</th>
-                                <th>Joined Date</th>
-                                <th class="text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if (mysqli_num_rows($users_result) > 0): ?>
-                                <?php while ($usr = mysqli_fetch_assoc($users_result)): 
-                                    $avatar = !empty($usr['profile_image']) && file_exists(PROFILE_UPLOAD_DIR . $usr['profile_image'])
-                                        ? BASE_URL . '/uploads/profiles/' . $usr['profile_image']
-                                        : 'https://ui-avatars.com/api/?name=' . urlencode($usr['full_name']) . '&background=2563eb&color=fff';
-                                ?>
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-3">
-                                                <img src="<?= escape($avatar) ?>" alt="" class="user-avatar-sm shadow-sm">
-                                                <div>
-                                                    <div class="fw-bold text-dark"><?= escape($usr['full_name']) ?></div>
-                                                    <div class="small text-muted"><?= escape($usr['email']) ?></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="small text-secondary"><?= escape($usr['phone'] ?? 'N/A') ?></td>
-                                        <td>
-                                            <span class="badge <?= $usr['role'] === 'admin' ? 'badge-admin-role' : 'badge-user-role' ?> rounded-pill text-capitalize">
+            <div class="card-body p-3.5 p-md-4">
+                <?php if ($total_users > 0): ?>
+                    <div class="d-flex align-items-center justify-content-between mb-3 px-1">
+                        <div class="text-muted small">
+                            Showing <strong class="text-dark"><?= $offset + 1 ?>–<?= min($offset + $per_page, $total_users) ?></strong> of <strong class="text-dark"><?= $total_users ?></strong> users
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column gap-3.5">
+                        <?php while ($usr = mysqli_fetch_assoc($users_result)): 
+                            $avatar = !empty($usr['profile_image']) && file_exists(PROFILE_UPLOAD_DIR . $usr['profile_image'])
+                                ? BASE_URL . '/uploads/profiles/' . $usr['profile_image']
+                                : 'https://ui-avatars.com/api/?name=' . urlencode($usr['full_name']) . '&background=2563eb&color=fff&bold=true';
+                            $is_admin = ($usr['role'] === 'admin');
+                        ?>
+                            <div class="posting-item-card p-3.5 p-md-4 rounded-4 border d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-4">
+                                <!-- Left: Avatar & User Info -->
+                                <div class="d-flex align-items-center gap-3 gap-md-4" style="min-width: 0;">
+                                    <img src="<?= escape($avatar) ?>" alt="<?= escape($usr['full_name']) ?>" loading="lazy" decoding="async" class="rounded-circle border flex-shrink-0 shadow-2xs me-3" style="width: 52px; height: 52px; object-fit: cover;">
+                                    <div class="d-flex flex-column gap-1 ps-1" style="min-width: 0;">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <h5 class="fw-bold mb-0 text-dark posting-title text-truncate" style="font-size: 1.08rem;" title="<?= escape($usr['full_name']) ?>">
+                                                <?= escape($usr['full_name']) ?>
+                                            </h5>
+                                            <span class="badge rounded-pill px-2.5 py-0.5 fw-semibold text-capitalize <?= $is_admin ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-secondary-subtle text-secondary' ?>" style="font-size: 0.72rem;">
                                                 <?= escape($usr['role']) ?>
                                             </span>
-                                        </td>
-                                        <td class="small text-muted"><?= formatDate($usr['created_at']) ?></td>
-                                        <td class="text-center">
-                                            <div class="d-inline-flex align-items-center justify-content-center gap-2">
-                                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editUserModal" data-user-id="<?= $usr['id'] ?>" data-user-name="<?= escape($usr['full_name']) ?>" data-user-email="<?= escape($usr['email']) ?>" data-user-phone="<?= escape($usr['phone'] ?? '') ?>" data-user-role="<?= escape($usr['role']) ?>" title="Edit User">
-                                                    <i class="bi bi-pencil-square"></i> Edit
-                                                </button>
-                                                <?php if ($usr['id'] !== $current_admin['id']): ?>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                            data-bs-toggle="modal" data-bs-target="#deleteConfirmModal" 
-                                                            data-id="<?= $usr['id'] ?>" 
-                                                            data-title="<?= escape($usr['full_name']) ?>" 
-                                                            data-delete-url="users.php?action=delete&id=<?= $usr['id'] ?>" 
-                                                            title="Delete User">
-                                                        <i class="bi bi-trash"></i> Delete
-                                                    </button>
-                                                <?php else: ?>
-                                                    <span class="badge bg-light text-muted border ms-1">Current Admin</span>
-                                                <?php endif; ?>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">No users found matching search criteria.</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
-                </div>
+                                        </div>
+                                        <div class="d-flex flex-wrap align-items-center gap-2 text-muted small" style="font-size: 0.85rem;">
+                                            <span class="text-slate-600"><i class="bi bi-envelope me-1"></i><?= escape($usr['email']) ?></span>
+                                            <?php if (!empty($usr['phone'])): ?>
+                                                <span class="text-slate-300">•</span>
+                                                <span><i class="bi bi-telephone me-1"></i><?= escape($usr['phone']) ?></span>
+                                            <?php endif; ?>
+                                            <span class="text-slate-300">•</span>
+                                            <span><i class="bi bi-calendar-event me-1"></i>Joined <?= formatDate($usr['created_at']) ?></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right: Action Buttons -->
+                                <div class="d-flex align-items-center gap-2 ms-lg-auto flex-shrink-0">
+                                    <button type="button" class="btn btn-outline-primary rounded-pill px-3.5 py-2 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-sm" data-bs-toggle="modal" data-bs-target="#editUserModal" data-user-id="<?= $usr['id'] ?>" data-user-name="<?= escape($usr['full_name']) ?>" data-user-email="<?= escape($usr['email']) ?>" data-user-phone="<?= escape($usr['phone'] ?? '') ?>" data-user-role="<?= escape($usr['role']) ?>" title="Edit User">
+                                        <i class="bi bi-pencil-square"></i>
+                                        <span>Edit</span>
+                                    </button>
+                                    <?php if ($usr['id'] !== $current_admin['id']): ?>
+                                        <button type="button" class="btn btn-light border text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;" 
+                                                data-bs-toggle="modal" data-bs-target="#deleteConfirmModal" 
+                                                data-id="<?= $usr['id'] ?>" 
+                                                data-title="<?= escape($usr['full_name']) ?>" 
+                                                data-delete-url="users.php?action=delete&id=<?= $usr['id'] ?>" 
+                                                title="Delete User">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    <?php else: ?>
+                                        <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">Current Admin</span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
+
+                    <?php if ($total_pages > 1): ?>
+                        <nav class="mt-4 d-flex justify-content-center" aria-label="Users pagination">
+                            <ul class="pagination pagination-sm gap-1">
+                                <?php
+                                $query_params = [
+                                    'search' => $search,
+                                    'per_page' => $per_page,
+                                ];
+                                $query_params = array_filter($query_params, fn($v) => $v !== '' && $v !== null);
+                                
+                                $prev_url = 'users.php?' . http_build_query(array_merge($query_params, ['page' => max(1, $page - 1)]));
+                                $next_url = 'users.php?' . http_build_query(array_merge($query_params, ['page' => min($total_pages, $page + 1)]));
+                                ?>
+                                <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+                                    <a class="page-link rounded-3" href="<?= $prev_url ?>"><i class="bi bi-chevron-left me-1"></i>Previous</a>
+                                </li>
+                                <?php 
+                                $start_p = max(1, $page - 2);
+                                $end_p = min($total_pages, $page + 2);
+                                if ($start_p > 1) {
+                                    echo '<li class="page-item"><a class="page-link rounded-3" href="users.php?' . http_build_query(array_merge($query_params, ['page' => 1])) . '">1</a></li>';
+                                    if ($start_p > 2) echo '<li class="page-item disabled"><span class="page-link border-0">…</span></li>';
+                                }
+                                for ($p = $start_p; $p <= $end_p; $p++): 
+                                    $p_url = 'users.php?' . http_build_query(array_merge($query_params, ['page' => $p]));
+                                ?>
+                                    <li class="page-item <?= $page === $p ? 'active' : '' ?>">
+                                        <a class="page-link rounded-3 <?= $page === $p ? 'fw-bold' : '' ?>" href="<?= $p_url ?>"><?= $p ?></a>
+                                    </li>
+                                <?php endfor; 
+                                if ($end_p < $total_pages) {
+                                    if ($end_p < $total_pages - 1) echo '<li class="page-item disabled"><span class="page-link border-0">…</span></li>';
+                                    echo '<li class="page-item"><a class="page-link rounded-3" href="users.php?' . http_build_query(array_merge($query_params, ['page' => $total_pages])) . '">' . $total_pages . '</a></li>';
+                                }
+                                ?>
+                                <li class="page-item <?= $page >= $total_pages ? 'disabled' : '' ?>">
+                                    <a class="page-link rounded-3" href="<?= $next_url ?>">Next<i class="bi bi-chevron-right ms-1"></i></a>
+                                </li>
+                            </ul>
+                        </nav>
+                    <?php endif; ?>
+
+                <?php else: ?>
+                    <div class="text-center py-5 px-4">
+                        <div class="bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                            <i class="bi bi-people fs-2"></i>
+                        </div>
+                        <h5 class="fw-bold mb-1">No Users Found</h5>
+                        <p class="text-muted small mb-0">No user accounts matched your search criteria.</p>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

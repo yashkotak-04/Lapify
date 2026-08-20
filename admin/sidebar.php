@@ -5,6 +5,7 @@ $admin_page = basename($_SERVER['PHP_SELF']);
 $admin_user = getCurrentUser();
 $pending_orders_count = 0;
 $pending_listings_count = 0;
+$new_queries_count = 0;
 if ($admin_user) {
     $count_stmt = mysqli_prepare(getDbConnection(), "SELECT COUNT(*) FROM orders WHERE status = 'placed'");
     mysqli_stmt_execute($count_stmt);
@@ -17,6 +18,14 @@ if ($admin_user) {
     mysqli_stmt_bind_result($listing_count_stmt, $pending_listings_count);
     mysqli_stmt_fetch($listing_count_stmt);
     mysqli_stmt_close($listing_count_stmt);
+
+    $queries_count_stmt = mysqli_prepare(getDbConnection(), "SELECT COUNT(*) FROM contact_queries WHERE status = 'new'");
+    if ($queries_count_stmt) {
+        mysqli_stmt_execute($queries_count_stmt);
+        mysqli_stmt_bind_result($queries_count_stmt, $new_queries_count);
+        mysqli_stmt_fetch($queries_count_stmt);
+        mysqli_stmt_close($queries_count_stmt);
+    }
 }
 ?>
 <!-- Dark Backdrop Overlay (Closed by default) -->
@@ -76,6 +85,14 @@ if ($admin_user) {
                 <i class="bi bi-bag-check"></i> Manage Orders
                 <?php if ($pending_orders_count > 0): ?>
                     <span class="badge bg-warning text-dark ms-auto rounded-pill"><?= (int)$pending_orders_count ?></span>
+                <?php endif; ?>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <?= $admin_page === 'queries.php' ? 'active' : '' ?>" href="<?= BASE_URL ?>/admin/queries.php">
+                <i class="bi bi-chat-left-text"></i> Queries
+                <?php if ($new_queries_count > 0): ?>
+                    <span class="badge bg-danger text-white ms-auto rounded-pill"><?= (int)$new_queries_count ?></span>
                 <?php endif; ?>
             </a>
         </li>

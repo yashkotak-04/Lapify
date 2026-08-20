@@ -102,89 +102,93 @@ $recent_users = mysqli_query($conn, "SELECT u.*, CASE WHEN a.email IS NOT NULL T
         <div class="row g-4 align-items-start">
             <!-- Recent Listings Card -->
             <div class="col-lg-7">
-                <div class="card dashboard-recent-card w-100 border-0 shadow-sm overflow-hidden" style="border-radius: 24px !important;">
+                <div class="card dashboard-recent-card w-100 border-0 shadow-sm overflow-hidden rounded-4">
                     <div class="card-header bg-transparent p-4 border-bottom d-flex align-items-center justify-content-between">
                         <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-laptop-fill me-2 text-primary"></i>Recent Listings</h5>
-                        <a href="laptops.php" class="btn btn-sm btn-outline-primary font-weight-bold rounded-pill px-3">Manage All <i class="bi bi-arrow-right ms-1"></i></a>
+                        <a href="laptops.php" class="btn btn-outline-primary rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-2 shadow-2xs">
+                            <span>Manage All</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
                     </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="bg-light text-muted small text-uppercase font-weight-bold">
-                                    <tr>
-                                        <th class="ps-4 py-3">Model</th>
-                                        <th class="py-3">Brand</th>
-                                        <th class="py-3">Price</th>
-                                        <th class="py-3">Seller</th>
-                                        <th class="py-3 pe-4 text-end">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php if (mysqli_num_rows($recent_laptops) > 0): ?>
-                                        <?php while ($laptop = mysqli_fetch_assoc($recent_laptops)): ?>
-                                            <tr>
-                                                <td class="ps-4 py-3 fw-bold text-dark"><?= escape($laptop['model']) ?></td>
-                                                <td class="py-3 text-secondary"><?= escape($laptop['brand_name']) ?></td>
-                                                <td class="py-3 text-primary fw-bold"><?= formatPrice($laptop['price']) ?></td>
-                                                <td class="py-3 small text-secondary"><?= escape($laptop['seller_name']) ?></td>
-                                                <td class="py-3 pe-4 text-end">
-                                                    <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2 font-weight-bold"><?= escape($laptop['status']) ?></span>
-                                                </td>
-                                            </tr>
-                                        <?php endwhile; ?>
-                                    <?php else: ?>
-                                        <tr>
-                                            <td colspan="5" class="text-center text-muted py-4">No recent laptop listings available.</td>
-                                        </tr>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="card-body p-3.5 p-md-4">
+                        <?php if (mysqli_num_rows($recent_laptops) > 0): ?>
+                            <div class="d-flex flex-column gap-3">
+                                <?php while ($laptop = mysqli_fetch_assoc($recent_laptops)): 
+                                    $img_src = getLaptopImageUrl($laptop) ?: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=300&q=80';
+                                    $listing_status = strtolower((string)($laptop['status'] ?? $laptop['approval_status'] ?? 'pending'));
+                                ?>
+                                    <div class="posting-item-card p-3 rounded-3 border d-flex align-items-center justify-content-between gap-3">
+                                        <div class="d-flex align-items-center gap-3" style="min-width: 0;">
+                                            <img src="<?= escape($img_src) ?>" alt="" class="posting-thumb rounded-3 border flex-shrink-0 me-3" style="width: 58px; height: 44px; object-fit: cover;">
+                                            <div class="d-flex flex-column gap-0.5 ps-1" style="min-width: 0;">
+                                                <h6 class="fw-bold mb-0 text-dark text-truncate" style="font-size: 0.96rem;" title="<?= escape($laptop['model']) ?>"><?= escape($laptop['model']) ?></h6>
+                                                <div class="small text-muted">
+                                                    <span><?= escape($laptop['brand_name']) ?></span> • <span><?= escape($laptop['seller_name']) ?></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-3 ms-auto flex-shrink-0">
+                                            <div class="fw-bold text-primary" style="font-size: 1.05rem;"><?= formatPrice($laptop['price']) ?></div>
+                                            <span class="status-pill status-pill-<?= in_array($listing_status, ['approved', 'active']) ? 'active' : ($listing_status === 'rejected' ? 'rejected' : 'pending') ?>">
+                                                <span class="status-dot"></span>
+                                                <span><?= escape(ucfirst($listing_status)) ?></span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                <?php endwhile; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="text-center text-muted py-4">No recent laptop listings available.</div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
 
             <!-- Recent Users Card -->
             <div class="col-lg-5">
-                <div class="card dashboard-recent-card w-100 border-0 shadow-sm overflow-hidden" style="border-radius: 24px !important;">
+                <div class="card dashboard-recent-card w-100 border-0 shadow-sm overflow-hidden rounded-4">
                     <div class="card-header bg-transparent p-4 border-bottom d-flex align-items-center justify-content-between">
                         <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-people-fill me-2 text-primary"></i>Recent Users</h5>
-                        <a href="users.php" class="btn btn-sm btn-outline-primary font-weight-bold rounded-pill px-3">Manage All <i class="bi bi-arrow-right ms-1"></i></a>
+                        <a href="users.php" class="btn btn-outline-primary rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-2 shadow-2xs">
+                            <span>Manage All</span>
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
                     </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="bg-light text-muted small text-uppercase font-weight-bold">
-                                    <tr>
-                                        <th class="ps-4 py-3">Name</th>
-                                        <th class="py-3">Role</th>
-                                        <th class="py-3 pe-4 text-end">Joined</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php if (mysqli_num_rows($recent_users) > 0): ?>
-                                        <?php while ($usr = mysqli_fetch_assoc($recent_users)): ?>
-                                            <tr>
-                                                <td class="ps-4 py-3">
-                                                    <div class="fw-bold text-dark"><?= escape($usr['full_name']) ?></div>
-                                                    <div class="small text-muted"><?= escape($usr['email']) ?></div>
-                                                </td>
-                                                <td class="py-3">
-                                                    <span class="badge <?= $usr['role'] === 'admin' ? 'badge-admin-role' : 'badge-user-role' ?> rounded-pill">
-                                                        <?= escape($usr['role']) ?>
-                                                    </span>
-                                                </td>
-                                                <td class="py-3 pe-4 text-end small text-muted"><?= formatDate($usr['created_at']) ?></td>
-                                            </tr>
-                                        <?php endwhile; ?>
-                                    <?php else: ?>
-                                        <tr>
-                                            <td colspan="3" class="text-center text-muted py-4">No registered users found.</td>
-                                        </tr>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="card-body p-3.5 p-md-4">
+                        <?php if (mysqli_num_rows($recent_users) > 0): ?>
+                            <div class="d-flex flex-column gap-3">
+                                <?php while ($usr = mysqli_fetch_assoc($recent_users)): 
+                                    $avatar = !empty($usr['profile_image']) && file_exists(PROFILE_UPLOAD_DIR . $usr['profile_image'])
+                                        ? BASE_URL . '/uploads/profiles/' . $usr['profile_image']
+                                        : 'https://ui-avatars.com/api/?name=' . urlencode($usr['full_name']) . '&background=2563eb&color=fff&bold=true';
+                                    $is_admin = ($usr['role'] === 'admin');
+                                ?>
+                                    <div class="posting-item-card p-3 rounded-3 border d-flex align-items-center justify-content-between gap-3">
+                                        <div class="d-flex align-items-center gap-3" style="min-width: 0;">
+                                            <img src="<?= escape($avatar) ?>" alt="<?= escape($usr['full_name']) ?>" class="rounded-circle border flex-shrink-0 shadow-2xs" style="width: 44px; height: 44px; object-fit: cover;">
+                                            <div class="d-flex flex-column gap-0.5" style="min-width: 0;">
+                                                <h6 class="fw-bold mb-0 text-dark text-truncate" style="font-size: 0.96rem;" title="<?= escape($usr['full_name']) ?>">
+                                                    <?= escape($usr['full_name']) ?>
+                                                </h6>
+                                                <div class="small text-muted text-truncate" style="font-size: 0.82rem;" title="<?= escape($usr['email']) ?>">
+                                                    <?= escape($usr['email']) ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-3 ms-auto flex-shrink-0">
+                                            <span class="badge rounded-pill px-2.5 py-1 fw-semibold text-capitalize <?= $is_admin ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-secondary-subtle text-secondary' ?>" style="font-size: 0.72rem;">
+                                                <?= escape($usr['role']) ?>
+                                            </span>
+                                            <span class="small text-muted" style="font-size: 0.82rem;">
+                                                <?= formatDate($usr['created_at']) ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                <?php endwhile; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="text-center text-muted py-4">No registered users found.</div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

@@ -33,14 +33,15 @@ document.addEventListener('DOMContentLoaded', function () {
   if (authSuccessModal) {
     const dismissModal = () => {
       authSuccessModal.style.opacity = '0';
-      authSuccessModal.style.transition = 'opacity 0.25s ease';
+      authSuccessModal.style.transition = 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+      authSuccessModal.style.transform = 'scale(0.96)';
       authSuccessModal.style.pointerEvents = 'none';
       setTimeout(() => {
         if (authSuccessModal.parentNode) authSuccessModal.parentNode.removeChild(authSuccessModal);
-      }, 250);
+      }, 400);
     };
     authSuccessModal.addEventListener('click', dismissModal);
-    setTimeout(dismissModal, 850);
+    setTimeout(dismissModal, 2200);
   }
 
   if (window.__lapifyCelebrationMessage && !window.__lapifyCheckoutRedirect) {
@@ -347,11 +348,100 @@ function updateWishlistBadge(count) {
 }
 
 
+/**
+ * Firecrackers & Fireworks Celebration Animation
+ * Triggers realistic cascading firecracker bursts across the viewport
+ */
+window.launchFirecrackers = function() {
+  if (typeof confetti !== 'function') return;
+
+  const defaults = {
+    origin: { y: 0.55 },
+    zIndex: 10000000
+  };
+
+  // 1. Initial double-burst from left and right corners
+  confetti({
+    particleCount: 95,
+    angle: 60,
+    spread: 75,
+    origin: { x: 0.05, y: 0.65 },
+    zIndex: 10000000,
+    colors: ['#22c55e', '#38bdf8', '#fbbf24', '#f43f5e', '#a855f7', '#ffedd5']
+  });
+
+  confetti({
+    particleCount: 95,
+    angle: 120,
+    spread: 75,
+    origin: { x: 0.95, y: 0.65 },
+    zIndex: 10000000,
+    colors: ['#22c55e', '#38bdf8', '#fbbf24', '#f43f5e', '#a855f7', '#ffedd5']
+  });
+
+  // 2. High-energy cascading fireworks bursts in center
+  const count = 190;
+  function fire(particleRatio, opts) {
+    confetti(Object.assign({}, defaults, opts, {
+      particleCount: Math.floor(count * particleRatio)
+    }));
+  }
+
+  fire(0.25, {
+    spread: 32,
+    startVelocity: 55,
+    colors: ['#38bdf8', '#22c55e', '#facc15']
+  });
+
+  fire(0.2, {
+    spread: 60,
+    colors: ['#ec4899', '#8b5cf6', '#3b82f6']
+  });
+
+  fire(0.35, {
+    spread: 100,
+    decay: 0.91,
+    scalar: 0.85,
+    colors: ['#10b981', '#f59e0b', '#ef4444', '#06b6d4']
+  });
+
+  fire(0.1, {
+    spread: 120,
+    startVelocity: 28,
+    decay: 0.92,
+    scalar: 1.2,
+    colors: ['#fbbf24', '#f43f5e', '#6366f1']
+  });
+
+  // 3. Sequential crackling fireworks bursts
+  setTimeout(() => {
+    confetti({
+      particleCount: 75,
+      spread: 95,
+      origin: { x: 0.25, y: 0.35 },
+      zIndex: 10000000,
+      colors: ['#f59e0b', '#ec4899', '#38bdf8', '#22c55e']
+    });
+  }, 280);
+
+  setTimeout(() => {
+    confetti({
+      particleCount: 75,
+      spread: 95,
+      origin: { x: 0.75, y: 0.35 },
+      zIndex: 10000000,
+      colors: ['#10b981', '#6366f1', '#f43f5e', '#fbbf24']
+    });
+  }, 500);
+};
+
 function triggerCelebration(message = '🎉 Order placed successfully!') {
   if (window.__lapifyCelebrationTriggered) return;
   window.__lapifyCelebrationTriggered = true;
 
-  if (typeof confetti === 'function') {
+  if (typeof window.launchFirecrackers === 'function') {
+    window.launchFirecrackers();
+  } else if (typeof confetti === 'function') {
     confetti({
       particleCount: 120,
       spread: 90,
@@ -394,38 +484,37 @@ function initAutoDismissAlerts() {
   });
 }
 
-function showToast(message, type = 'info') {
-  if (typeof window.showToast === 'function' && window.showToast !== showToast) {
-    window.showToast(message, type, 3500);
-    return;
-  }
+// Global showToast bridge (delegates to toast.js notification system)
+if (typeof window.showToast !== 'function') {
+  window.showToast = function (message, type = 'success', duration = 3500) {
+    let toastContainer = document.getElementById('lapify-toast-container');
+    if (!toastContainer) {
+      toastContainer = document.createElement('div');
+      toastContainer.id = 'lapify-toast-container';
+      document.body.appendChild(toastContainer);
+    }
 
-  let toastContainer = document.getElementById('lapify-toast-container');
-  if (!toastContainer) {
-    toastContainer = document.createElement('div');
-    toastContainer.id = 'lapify-toast-container';
-    toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-    toastContainer.style.zIndex = '1090';
-    document.body.appendChild(toastContainer);
-  }
+    const safeType = ['success', 'error', 'danger', 'warning', 'info'].includes(type) ? (type === 'danger' ? 'error' : type) : 'success';
+    const isSuccess = safeType === 'success';
+    const isError = safeType === 'error';
 
-  const toastHtml = `
-    <div class="toast align-items-center toast-theme border-0 show shadow" role="alert" aria-live="assertive" aria-atomic="true">
-      <div class="d-flex">
-        <div class="toast-body font-weight-medium">
-          ${message}
-        </div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    const toast = document.createElement('div');
+    toast.className = 'lapify-toast toast-' + safeType;
+    toast.innerHTML = `
+      <div class="lapify-toast__icon">${isSuccess ? '✓' : (isError ? '✕' : 'ℹ')}</div>
+      <div class="lapify-toast__content">
+        <div class="lapify-toast__title">${safeType.toUpperCase()}</div>
+        <div class="lapify-toast__message">${message}</div>
       </div>
-    </div>
-  `;
+      <button type="button" class="lapify-toast__close" aria-label="Close">×</button>
+    `;
 
-  const div = document.createElement('div');
-  div.innerHTML = toastHtml;
-  const toastEl = div.firstElementChild;
-  toastContainer.appendChild(toastEl);
-
-  setTimeout(() => {
-    toastEl.remove();
-  }, 3500);
+    toast.querySelector('.lapify-toast__close').addEventListener('click', () => toast.remove());
+    toastContainer.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('is-visible'));
+    setTimeout(() => {
+      toast.classList.add('is-leaving');
+      setTimeout(() => toast.remove(), 220);
+    }, duration);
+  };
 }

@@ -60,14 +60,25 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // ==========================================
+  // Global Modal Attachment (Prevents stacking context / black overlay bug)
+  // ==========================================
+  document.querySelectorAll('.modal').forEach(function (modal) {
+    if (modal.parentElement && modal.parentElement !== document.body) {
+      document.body.appendChild(modal);
+    }
+  });
+
+  // ==========================================
   // Delete Confirm Modal
   // ==========================================
   const deleteModal = document.getElementById('deleteConfirmModal');
   if (deleteModal) {
     deleteModal.addEventListener('show.bs.modal', function (event) {
       const button = event.relatedTarget;
-      const itemTitle = button.getAttribute('data-title') || 'item';
-      const deleteUrl = button.getAttribute('data-delete-url');
+      if (!button) return;
+
+      const itemTitle = button.getAttribute('data-title') || 'this item';
+      const deleteUrl = button.getAttribute('data-delete-url') || button.getAttribute('href');
 
       const modalTitle = deleteModal.querySelector('.modal-item-title');
       const confirmBtn = deleteModal.querySelector('.btn-confirm-delete');
@@ -76,6 +87,14 @@ document.addEventListener('DOMContentLoaded', function () {
       if (confirmBtn && deleteUrl) {
         confirmBtn.setAttribute('href', deleteUrl);
       }
+    });
+
+    // Ensure backdrop cleanup on hide
+    deleteModal.addEventListener('hidden.bs.modal', function () {
+      document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
     });
   }
 
@@ -86,13 +105,22 @@ document.addEventListener('DOMContentLoaded', function () {
   if (editUserModal) {
     editUserModal.addEventListener('show.bs.modal', function (event) {
       const button = event.relatedTarget;
-      document.getElementById('edit_user_id').value = button.getAttribute('data-user-id') || '';
-      document.getElementById('edit_full_name').value = button.getAttribute('data-user-name') || '';
-      document.getElementById('edit_email').value = button.getAttribute('data-user-email') || '';
-      document.getElementById('edit_phone').value = button.getAttribute('data-user-phone') || '';
+      if (!button) return;
+
+      const userIdEl = document.getElementById('edit_user_id');
+      const fullNameEl = document.getElementById('edit_full_name');
+      const emailEl = document.getElementById('edit_email');
+      const phoneEl = document.getElementById('edit_phone');
+      const isAdminEl = document.getElementById('edit_is_admin');
+      const passwordEl = document.getElementById('edit_password');
+
+      if (userIdEl) userIdEl.value = button.getAttribute('data-user-id') || '';
+      if (fullNameEl) fullNameEl.value = button.getAttribute('data-user-name') || '';
+      if (emailEl) emailEl.value = button.getAttribute('data-user-email') || '';
+      if (phoneEl) phoneEl.value = button.getAttribute('data-user-phone') || '';
       const role = button.getAttribute('data-user-role') || 'user';
-      document.getElementById('edit_is_admin').checked = role === 'admin';
-      document.getElementById('edit_password').value = '';
+      if (isAdminEl) isAdminEl.checked = role === 'admin';
+      if (passwordEl) passwordEl.value = '';
     });
   }
 
@@ -103,8 +131,15 @@ document.addEventListener('DOMContentLoaded', function () {
   if (editBrandModal) {
     editBrandModal.addEventListener('show.bs.modal', function (event) {
       const button = event.relatedTarget;
-      document.getElementById('edit_brand_id').value = button.getAttribute('data-brand-id') || '';
-      document.getElementById('edit_brand_name').value = button.getAttribute('data-brand-name') || '';
+      if (!button) return;
+
+      const brandIdEl = document.getElementById('edit_brand_id');
+      const brandNameEl = document.getElementById('edit_brand_name');
+      const brandLogoEl = document.getElementById('edit_brand_logo');
+
+      if (brandIdEl) brandIdEl.value = button.getAttribute('data-brand-id') || '';
+      if (brandNameEl) brandNameEl.value = button.getAttribute('data-brand-name') || '';
+      if (brandLogoEl) brandLogoEl.value = '';
     });
   }
 
@@ -115,18 +150,34 @@ document.addEventListener('DOMContentLoaded', function () {
   if (editLaptopModal) {
     editLaptopModal.addEventListener('show.bs.modal', function (event) {
       const button = event.relatedTarget;
-      document.getElementById('edit_laptop_id').value = button.getAttribute('data-laptop-id') || '';
-      document.getElementById('edit_brand_id').value = button.getAttribute('data-brand-id') || '';
-      document.getElementById('edit_type').value = button.getAttribute('data-type') || 'New';
-      document.getElementById('edit_model').value = button.getAttribute('data-model') || '';
-      document.getElementById('edit_processor').value = button.getAttribute('data-processor') || '';
-      document.getElementById('edit_ram').value = button.getAttribute('data-ram') || '';
-      document.getElementById('edit_storage').value = button.getAttribute('data-storage') || '';
-      document.getElementById('edit_condition').value = button.getAttribute('data-condition') || '';
-      document.getElementById('edit_price').value = button.getAttribute('data-price') || '';
-      document.getElementById('edit_description').value = button.getAttribute('data-description') || '';
-      document.getElementById('edit_quantity').value = button.getAttribute('data-quantity') || '1';
-      document.getElementById('edit_image').value = '';
+      if (!button) return;
+
+      const laptopIdEl = document.getElementById('edit_laptop_id');
+      const brandIdEl = document.getElementById('edit_brand_id');
+      const typeEl = document.getElementById('edit_type');
+      const modelEl = document.getElementById('edit_model');
+      const processorEl = document.getElementById('edit_processor');
+      const ramEl = document.getElementById('edit_ram');
+      const storageEl = document.getElementById('edit_storage');
+      const conditionEl = document.getElementById('edit_condition');
+      const priceEl = document.getElementById('edit_price');
+      const descriptionEl = document.getElementById('edit_description');
+      const quantityEl = document.getElementById('edit_quantity');
+      const imageEl = document.getElementById('edit_image');
+
+      if (laptopIdEl) laptopIdEl.value = button.getAttribute('data-laptop-id') || '';
+      if (brandIdEl) brandIdEl.value = button.getAttribute('data-brand-id') || '';
+      if (typeEl) typeEl.value = button.getAttribute('data-type') || 'New';
+      if (modelEl) modelEl.value = button.getAttribute('data-model') || '';
+      if (processorEl) processorEl.value = button.getAttribute('data-processor') || '';
+      if (ramEl) ramEl.value = button.getAttribute('data-ram') || '';
+      if (storageEl) storageEl.value = button.getAttribute('data-storage') || '';
+      if (conditionEl) conditionEl.value = button.getAttribute('data-condition') || '';
+      if (priceEl) priceEl.value = button.getAttribute('data-price') || '';
+      if (descriptionEl) descriptionEl.value = button.getAttribute('data-description') || '';
+      if (quantityEl) quantityEl.value = button.getAttribute('data-quantity') || '1';
+      if (imageEl) imageEl.value = '';
     });
   }
 });
+

@@ -139,6 +139,10 @@ require_once __DIR__ . '/includes/navbar.php';
                         <span><i class="bi bi-receipt me-2"></i>View My Orders</span>
                         <i class="bi bi-chevron-right"></i>
                     </a>
+                    <a href="my-queries.php" class="btn btn-light text-start font-weight-bold p-3 rounded-3 d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-chat-left-text me-2"></i>My Support Inquiries</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
                     <a href="profile.php" class="btn btn-light text-start font-weight-bold p-3 rounded-3 d-flex align-items-center justify-content-between">
                         <span><i class="bi bi-gear me-2"></i>Edit Profile & Security</span>
                         <i class="bi bi-chevron-right"></i>
@@ -148,42 +152,99 @@ require_once __DIR__ . '/includes/navbar.php';
         </div>
 
         <div class="col-lg-8">
-            <div class="dashboard-recent-card h-100">
-                <div class="dashboard-recent-header bg-white p-4 border-bottom d-flex align-items-center justify-content-between">
-                    <h5 class="fw-bold mb-0">Recent Postings</h5>
-                    <a href="my-listings.php" class="btn btn-sm btn-outline-primary rounded-pill px-3">View All</a>
+            <div class="dashboard-recent-card d-flex flex-column h-100">
+                <!-- Spacious Header -->
+                <div class="dashboard-recent-header d-flex align-items-center justify-content-between p-4 border-bottom">
+                    <div>
+                        <h5 class="fw-bold mb-1 text-slate-900" style="font-size: 1.25rem;">Recent Postings</h5>
+                        <p class="text-muted small mb-0" style="font-size: 0.88rem;">Your latest laptop listings & status</p>
+                    </div>
+                    <a href="my-listings.php" class="btn btn-outline-primary rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2">
+                        <span>View All</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
                 </div>
-                <div class="card-body p-0">
+
+                <!-- Body with Generous Spacing -->
+                <div class="card-body p-4 flex-grow-1">
                     <?php if (mysqli_num_rows($recent_listings) > 0): ?>
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="bg-light text-muted small text-uppercase font-weight-bold">
-                                    <tr>
-                                        <th class="ps-4">Model</th>
-                                        <th>Price</th>
-                                        <th>Status</th>
-                                        <th class="pe-4 text-end">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php while ($row = mysqli_fetch_assoc($recent_listings)): ?>
-                                        <tr>
-                                            <td class="ps-4 fw-bold"><?= escape($row['model']) ?></td>
-                                            <td class="text-primary fw-bold"><?= formatPrice($row['price']) ?></td>
-                                            <td>
-                                                <span class="badge bg-success-subtle text-success rounded-pill"><?= escape($row['status']) ?></span>
-                                            </td>
-                                            <td class="pe-4 text-end">
-                                                <a href="laptop-details.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-light">View</a>
-                                            </td>
-                                        </tr>
-                                    <?php endwhile; ?>
-                                </tbody>
-                            </table>
+                        <div class="d-flex flex-column gap-3">
+                            <?php while ($row = mysqli_fetch_assoc($recent_listings)): 
+                                $img_src = getLaptopImageUrl($row) ?: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=300&q=80';
+                                $listing_state = strtolower((string)($row['status'] ?? $row['approval_status'] ?? 'pending'));
+                                
+                                if (in_array($listing_state, ['approved', 'available', 'active'])) {
+                                    $status_class = 'status-pill-active';
+                                    $status_label = 'Active';
+                                } elseif ($listing_state === 'rejected') {
+                                    $status_class = 'status-pill-rejected';
+                                    $status_label = 'Rejected';
+                                } else {
+                                    $status_class = 'status-pill-pending';
+                                    $status_label = 'Pending Approval';
+                                }
+                            ?>
+                                <div class="posting-item-card rounded-4 border">
+                                    <!-- Left: Image & Info with ample breathing room -->
+                                    <div class="posting-info-wrap">
+                                        <div class="posting-thumb-wrapper">
+                                            <img src="<?= escape($img_src) ?>" alt="<?= escape($row['model']) ?>" class="posting-thumb shadow-2xs">
+                                        </div>
+                                        <div class="posting-text-wrap">
+                                            <h6 class="posting-title" title="<?= escape($row['model']) ?>">
+                                                <?= escape($row['model']) ?>
+                                            </h6>
+                                            <div class="posting-meta-row">
+                                                <span class="fw-semibold text-secondary">
+                                                    <i class="bi bi-tag-fill text-primary me-1"></i><?= escape($row['brand_name'] ?? 'Laptop') ?>
+                                                </span>
+                                                <span class="text-slate-300">•</span>
+                                                <span>
+                                                    <i class="bi bi-clock me-1"></i><?= formatDate($row['created_at']) ?>
+                                                </span>
+                                                <?php if (!empty($row['type'])): ?>
+                                                    <span class="text-slate-300">•</span>
+                                                    <span class="badge rounded-pill px-2.5 py-0.5 <?= (strtolower($row['type']) === 'new') ? 'badge-type-new' : 'badge-type-used' ?>">
+                                                        <?= (strtolower($row['type']) === 'new') ? 'Brand New' : 'Pre-Owned' ?>
+                                                    </span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Right: Price, Status, and Action Button -->
+                                    <div class="posting-actions-wrap">
+                                        <div class="posting-price">
+                                            <?= formatPrice($row['price']) ?>
+                                        </div>
+
+                                        <div>
+                                            <span class="status-pill <?= $status_class ?>">
+                                                <span class="status-dot"></span>
+                                                <span><?= escape($status_label) ?></span>
+                                            </span>
+                                        </div>
+
+                                        <div>
+                                            <a href="laptop-details.php?id=<?= $row['id'] ?>" class="btn btn-outline-primary rounded-pill px-3.5 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-2xs" title="View Listing Details">
+                                                <i class="bi bi-eye"></i>
+                                                <span>View</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endwhile; ?>
                         </div>
                     <?php else: ?>
-                        <div class="text-center py-4 text-muted">
-                            No listings posted yet. <a href="sell.php">Click here to sell your laptop!</a>
+                        <div class="text-center py-5 px-4 my-auto">
+                            <div class="bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                <i class="bi bi-laptop fs-2"></i>
+                            </div>
+                            <h6 class="fw-bold mb-1">No Listings Posted Yet</h6>
+                            <p class="text-muted small mb-3">Post your laptop advertisement for free in minutes.</p>
+                            <a href="sell.php" class="btn btn-primary rounded-pill px-4 py-2.5 fw-semibold shadow-sm">
+                                <i class="bi bi-plus-lg me-1.5"></i> Post Free Laptop Ad
+                            </a>
                         </div>
                     <?php endif; ?>
                 </div>

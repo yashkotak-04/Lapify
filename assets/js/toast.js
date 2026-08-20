@@ -29,6 +29,7 @@
     function getIcon(type) {
         switch (type) {
             case 'error':
+            case 'danger':
                 return '✕';
             case 'warning':
                 return '⚠';
@@ -43,6 +44,7 @@
     function getTypeClass(type) {
         switch (type) {
             case 'error':
+            case 'danger':
                 return 'toast-error';
             case 'warning':
                 return 'toast-warning';

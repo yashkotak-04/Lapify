@@ -44,6 +44,7 @@ function initCheckoutSession(bool $forceReset = false) {
                 $availableStock = max(1, (int)($item['stock_quantity'] ?? $item['quantity'] ?? 1));
                 $item['selected_quantity'] = 1;
                 $item['max_stock'] = $availableStock;
+                $item['available_stock'] = $availableStock;
                 $items[] = $item;
                 $total += (float)$item['price'];
             }
@@ -61,6 +62,7 @@ function initCheckoutSession(bool $forceReset = false) {
             $availableStock = max(1, (int)($item['stock_quantity'] ?? $item['quantity'] ?? 1));
             $item['selected_quantity'] = 1;
             $item['max_stock'] = $availableStock;
+            $item['available_stock'] = $availableStock;
             $items[] = $item;
             $total += (float)$item['price'];
         }

@@ -53,31 +53,53 @@ function slugifyBrandName($brandName) {
 
 /**
  * Resolve a brand logo URL if the matching file exists.
+ * Accepts either a brand array (with 'brand_name' and 'logo_path') or a brand name string.
  */
-function getBrandLogoUrl($brandName) {
+function getBrandLogoUrl($brandOrName, $fallbackLogoPath = null) {
+    $brandName = '';
+    $logoPath = null;
+
+    if (is_array($brandOrName)) {
+        $brandName = $brandOrName['brand_name'] ?? '';
+        $logoPath = !empty($brandOrName['logo_path']) ? trim($brandOrName['logo_path']) : null;
+    } else {
+        $brandName = (string)$brandOrName;
+        $logoPath = !empty($fallbackLogoPath) ? trim($fallbackLogoPath) : null;
+    }
+
+    // 1. If explicit logo_path exists in DB and the file exists on disk, return its URL!
+    if (!empty($logoPath)) {
+        $cleanPath = ltrim($logoPath, '/\\');
+        $fullPath = __DIR__ . '/../' . $cleanPath;
+        if (file_exists($fullPath)) {
+            return rtrim(BASE_URL, '/') . '/' . $cleanPath;
+        }
+    }
+
+    // 2. Try slugified filenames in uploads/brands/ and assets/images/brands/
     $slug = slugifyBrandName($brandName);
-    $candidates = [];
+    if ($slug !== '') {
+        $exts = ['svg', 'png', 'webp', 'jpg', 'jpeg'];
+        $candidates = [];
 
-    // Prefer uploaded brand images (often SVG) for sharper results, then packaged assets
-    $exts = ['svg', 'png', 'webp'];
-    foreach ($exts as $e) {
-        $candidates[] = [
-            'path' => __DIR__ . '/../uploads/brands/' . $slug . '.' . $e,
-            'url' => BASE_URL . '/uploads/brands/' . $slug . '.' . $e
-        ];
-    }
+        foreach ($exts as $e) {
+            $candidates[] = [
+                'path' => __DIR__ . '/../uploads/brands/' . $slug . '.' . $e,
+                'url' => rtrim(BASE_URL, '/') . '/uploads/brands/' . $slug . '.' . $e
+            ];
+        }
 
-    // Fallback to packaged assets
-    foreach ($exts as $e) {
-        $candidates[] = [
-            'path' => __DIR__ . '/../assets/images/brands/' . $slug . '.' . $e,
-            'url' => BASE_URL . '/assets/images/brands/' . $slug . '.' . $e
-        ];
-    }
+        foreach ($exts as $e) {
+            $candidates[] = [
+                'path' => __DIR__ . '/../assets/images/brands/' . $slug . '.' . $e,
+                'url' => rtrim(BASE_URL, '/') . '/assets/images/brands/' . $slug . '.' . $e
+            ];
+        }
 
-    foreach ($candidates as $c) {
-        if (file_exists($c['path'])) {
-            return $c['url'];
+        foreach ($candidates as $c) {
+            if (file_exists($c['path'])) {
+                return $c['url'];
+            }
         }
     }
 
@@ -144,56 +166,102 @@ function setFlash($type, $message) {
 }
 
 /**
- * Display flash alerts in Bootstrap markup
+ * Display flash alerts & toast popups
+ * All success messages render in vibrant green
+ * All error/negative messages render in vibrant red
  */
 function displayFlash() {
-    $types = ['success' => 'success', 'error' => 'danger', 'info' => 'info', 'warning' => 'warning'];
-    foreach ($types as $key => $bsClass) {
-        if (isset($_SESSION['flash_' . $key])) {
+    $types = [
+        'success' => ['type' => 'success'],
+        'error'   => ['type' => 'error'],
+        'danger'  => ['type' => 'error'],
+        'warning' => ['type' => 'warning'],
+        'info'    => ['type' => 'info']
+    ];
+
+    $toast_msg = $_SESSION['toast_message'] ?? '';
+    $toast_t = $_SESSION['toast_type'] ?? 'info';
+    unset($_SESSION['toast_message'], $_SESSION['toast_type']);
+
+    foreach ($types as $key => $cfg) {
+        if (!empty($_SESSION['flash_' . $key])) {
+            $msg = $_SESSION['flash_' . $key];
+            if (empty($toast_msg)) {
+                $toast_msg = $msg;
+                $toast_t = $cfg['type'];
+            }
             unset($_SESSION['flash_' . $key]);
         }
     }
 
-    if (!empty($_SESSION['toast_message'])) {
-        $message = addslashes($_SESSION['toast_message']);
-        $type = isset($_SESSION['toast_type']) ? $_SESSION['toast_type'] : 'info';
-        $safeType = in_array($type, ['success','error','warning','info'], true) ? $type : 'info';
-        echo "<script>window.addEventListener('DOMContentLoaded', function () { if (typeof window.showToast === 'function') { window.showToast('{$message}', '{$safeType}', 3600); } });</script>";
-        unset($_SESSION['toast_message']);
-        unset($_SESSION['toast_type']);
+    if (!empty($toast_msg)) {
+        $safeType = in_array($toast_t, ['success', 'error', 'danger', 'warning', 'info'], true) ? ($toast_t === 'danger' ? 'error' : $toast_t) : 'info';
+        $json_msg = json_encode($toast_msg, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
+        echo "<script>
+        (function() {
+            function triggerToast() {
+                if (typeof window.showToast === 'function') {
+                    window.showToast({$json_msg}, '{$safeType}', 4000);
+                }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', triggerToast);
+            } else {
+                triggerToast();
+            }
+        })();
+        </script>";
     }
 
     renderAuthSuccessOverlay();
 }
 
 /**
- * Render animated success overlay for Login
+ * Render animated success overlay or welcome notification for Login & Registration
  */
 function renderAuthSuccessOverlay() {
-    $title = '';
-    $message = '';
-    $redirectUrl = '';
+    $name = htmlspecialchars($_SESSION['full_name'] ?? 'User', ENT_QUOTES, 'UTF-8');
+    $isAdmin = !empty($_SESSION['role']) && $_SESSION['role'] === 'admin';
+    $welcomeMsg = $isAdmin 
+        ? "🎉 Welcome back, {$name}! Administrator Command Center is ready." 
+        : "🎉 Welcome back, {$name}! Your dashboard is ready.";
 
     if (!empty($_GET['login_success']) || !empty($_SESSION['auth_login_success'])) {
-        $name = htmlspecialchars($_SESSION['full_name'] ?? 'User', ENT_QUOTES, 'UTF-8');
-        $title = '🎉 Successfully Logged In!';
-        $message = 'Welcome back, ' . $name . '! Launching your Lapify dashboard...';
         unset($_SESSION['auth_login_success']);
-    }
-
-    if ($title !== '') {
-        echo '<div id="auth-success-modal" class="auth-success-backdrop active" ' . ($redirectUrl ? 'data-redirect-url="' . htmlspecialchars($redirectUrl, ENT_QUOTES, 'UTF-8') . '"' : '') . '>
-            <div class="auth-success-card">
-                <div class="auth-success-icon-wrap">
-                    <i class="bi bi-check-circle-fill"></i>
-                </div>
-                <h3 class="auth-success-title">' . $title . '</h3>
-                <p class="auth-success-text">' . $message . '</p>
-                <div class="auth-success-progress-track">
-                    <div class="auth-success-progress-bar"></div>
-                </div>
-            </div>
-        </div>';
+        echo "<script>
+        (function() {
+            function triggerWelcomeToast() {
+                if (typeof window.showToast === 'function') {
+                    window.showToast('{$welcomeMsg}', 'success', 4000);
+                }
+                if (typeof confetti === 'function') {
+                    try {
+                        confetti({ particleCount: 130, spread: 80, origin: { y: 0.6 }, zIndex: 99999 });
+                    } catch(e) {}
+                }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', triggerWelcomeToast);
+            } else {
+                triggerWelcomeToast();
+            }
+        })();
+        </script>";
+    } elseif (!empty($_GET['registered'])) {
+        echo "<script>
+        (function() {
+            function triggerRegisteredToast() {
+                if (typeof window.showToast === 'function') {
+                    window.showToast('🎉 Account created successfully! You can now sign in with your credentials.', 'success', 4500);
+                }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', triggerRegisteredToast);
+            } else {
+                triggerRegisteredToast();
+            }
+        })();
+        </script>";
     }
 }
 

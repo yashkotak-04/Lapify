@@ -9,6 +9,7 @@ requireLogin();
 
 $conn = getDbConnection();
 $user = getCurrentUser();
+$is_admin = isAdmin();
 
 // Fetch active brands for dropdown.
 $brands_res = mysqli_query($conn, "SELECT id, brand_name FROM brands WHERE status = 'active' ORDER BY brand_name ASC");
@@ -66,11 +67,27 @@ require_once __DIR__ . '/includes/navbar.php';
                                 <div class="invalid-feedback" id="brand_id-error"></div>
                             </div>
 
-                            <div class="col-md-6">
+                            <div class="col-md-6" id="model-field-container">
                                 <label for="model" class="form-label font-weight-bold">Model <span class="text-danger">*</span></label>
-                                <select name="model" id="model" class="form-select" disabled required>
-                                    <option value="">Select a brand first</option>
-                                </select>
+
+                                <!-- Model Dropdown (shown when brand has predefined models) -->
+                                <div id="model-select-wrapper">
+                                    <select name="model" id="model" class="form-select" disabled required>
+                                        <option value="">Select a brand first</option>
+                                    </select>
+                                </div>
+
+                                <!-- Model Text Input (automatically shown when brand has 0 models) -->
+                                <div id="model-text-wrapper" class="d-none">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-muted"><i class="bi bi-laptop"></i></span>
+                                        <input type="text" name="model_custom" id="model_custom" class="form-control" placeholder="Enter laptop model (e.g. Gram 16, Blade 15, Surface Pro 9)..." maxlength="100" autocomplete="off">
+                                    </div>
+                                    <div class="form-text text-muted small mt-1" id="model-custom-hint">
+                                        <i class="bi bi-info-circle me-1"></i>Type the model name for this brand.
+                                    </div>
+                                </div>
+
                                 <div class="invalid-feedback" id="model-error"></div>
                             </div>
                         </div>
@@ -79,22 +96,30 @@ require_once __DIR__ . '/includes/navbar.php';
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
                                 <label class="form-label font-weight-bold d-block">Condition <span class="text-danger">*</span></label>
-                                <div class="condition-radio-container" id="condition_type_group">
-                                    <label class="condition-radio-option <?= $old_condition === 'new' ? 'active' : '' ?>" for="condition_new">
-                                        <input class="form-check-input condition-radio-input" type="radio" name="condition_type" id="condition_new" value="new" <?= $old_condition === 'new' ? 'checked' : '' ?>>
-                                        <span class="condition-radio-text">New Laptop</span>
-                                    </label>
-                                    <label class="condition-radio-option <?= $old_condition === 'old' ? 'active' : '' ?>" for="condition_old">
-                                        <input class="form-check-input condition-radio-input" type="radio" name="condition_type" id="condition_old" value="old" <?= $old_condition === 'old' ? 'checked' : '' ?>>
-                                        <span class="condition-radio-text">Old Laptop</span>
-                                    </label>
-                                </div>
+                                <?php if ($is_admin): ?>
+                                    <div class="condition-radio-container" id="condition_type_group">
+                                        <label class="condition-radio-option <?= $old_condition === 'new' ? 'active' : '' ?>" for="condition_new">
+                                            <input class="form-check-input condition-radio-input" type="radio" name="condition_type" id="condition_new" value="new" <?= $old_condition === 'new' ? 'checked' : '' ?>>
+                                            <span class="condition-radio-text">New Laptop</span>
+                                        </label>
+                                        <label class="condition-radio-option <?= $old_condition === 'old' ? 'active' : '' ?>" for="condition_old">
+                                            <input class="form-check-input condition-radio-input" type="radio" name="condition_type" id="condition_old" value="old" <?= $old_condition === 'old' ? 'checked' : '' ?>>
+                                            <span class="condition-radio-text">Old Laptop</span>
+                                        </label>
+                                    </div>
+                                <?php else: ?>
+                                    <input type="text" id="condition_display" class="form-control bg-light text-dark" value="Pre-Owned / Used Laptop" readonly style="cursor: not-allowed; font-weight: 500;">
+                                    <input type="hidden" name="condition_type" id="condition_old" value="old">
+                                    <div class="form-text text-muted small mt-1" style="font-size: 0.76rem;">
+                                        <i class="bi bi-info-circle me-1"></i>Pre-Owned listing. Brand new laptops are cataloged by verified admins.
+                                    </div>
+                                <?php endif; ?>
                                 <div class="invalid-feedback d-block" id="condition_type-error"></div>
                             </div>
 
                             <div class="col-md-4">
                                 <label for="price" class="form-label font-weight-bold">Selling Price (₹) <span class="text-danger">*</span></label>
-                                <input type="number" step="0.01" min="1" name="price" id="price" class="form-control" placeholder="e.g. 750.00" required>
+                                <input type="number" step="0.01" min="1" name="price" id="price" class="form-control" placeholder="e.g. 45000" required>
                                 <div class="invalid-feedback" id="price-error"></div>
                             </div>
 
@@ -111,13 +136,6 @@ require_once __DIR__ . '/includes/navbar.php';
                                 <label for="processor" class="form-label font-weight-bold">Processor (CPU)</label>
                                 <select name="processor" id="processor" class="form-select">
                                     <option value="">-- Optional --</option>
-                                    <option value="Intel Core i5 12th Gen">Intel Core i5 12th Gen</option>
-                                    <option value="Intel Core i7 12th Gen">Intel Core i7 12th Gen</option>
-                                    <option value="Intel Core i9 14th Gen">Intel Core i9 14th Gen</option>
-                                    <option value="Apple M3 Max 16-Core">Apple M3 Max 16-Core</option>
-                                    <option value="Apple M1 8-Core">Apple M1 8-Core</option>
-                                    <option value="AMD Ryzen 7 7840U">AMD Ryzen 7 7840U</option>
-                                    <option value="AMD Ryzen 7 5800H">AMD Ryzen 7 5800H</option>
                                 </select>
                             </div>
 
@@ -160,8 +178,9 @@ require_once __DIR__ . '/includes/navbar.php';
 
                         <!-- Image Upload -->
                         <div class="mb-4">
-                            <label for="image" class="form-label font-weight-bold">Laptop Photo (Max 2MB)</label>
-                            <input type="file" name="image" id="image" class="form-control image-preview-input" data-preview-target="img-preview" accept="image/jpeg,image/png,image/webp">
+                            <label for="image" class="form-label font-weight-bold">Laptop Photo <span class="text-danger">*</span> (Max 2MB)</label>
+                            <input type="file" name="image" id="image" class="form-control image-preview-input" data-preview-target="img-preview" accept="image/jpeg,image/png,image/webp" required>
+                            <div class="invalid-feedback" id="image-error"></div>
                             <div class="form-text">Accepted formats: JPG, PNG, WEBP.</div>
                             <div class="mt-3">
                                 <img id="img-preview" src="#" alt="Preview" class="img-thumbnail d-none" style="max-height: 180px;">
@@ -183,46 +202,7 @@ require_once __DIR__ . '/includes/navbar.php';
     </div>
 </div>
 
-<!-- Listing Success Celebration Modal -->
-<div class="modal fade" id="listingSuccessModal" tabindex="-1" aria-labelledby="listingSuccessModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content listing-success-content border-0 rounded-4 shadow-lg text-center p-4">
-            <div class="modal-body p-3">
-                <div class="listing-success-icon-wrapper mb-3">
-                    <div class="listing-success-glow"></div>
-                    <div class="listing-success-icon">
-                        <i class="bi bi-check-circle-fill"></i>
-                    </div>
-                </div>
 
-                <h3 class="fw-bold text-success mb-2" id="listingSuccessModalLabel">Product Listed Successfully! 🎉</h3>
-                <p class="text-secondary fs-6 mb-4 lh-base">
-                    Your laptop listing has been created and submitted successfully.<br>
-                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 mt-3 rounded-pill fw-semibold fs-7">
-                        <i class="bi bi-clock-history me-1"></i> Pending Admin Approval
-                    </span>
-                    <span class="d-block text-muted mt-2 small">
-                        Our admin team will review and approve your listing as soon as possible.
-                    </span>
-                </p>
-
-                <div class="d-flex justify-content-center gap-3 flex-wrap">
-                    <a href="my-listings.php" class="btn btn-success btn-lg px-4 rounded-pill shadow-sm fw-bold">
-                        <i class="bi bi-collection-play me-2"></i> View My Listings
-                    </a>
-                    <button type="button" class="btn btn-outline-secondary btn-lg px-4 rounded-pill fw-bold" id="post-another-btn" data-bs-dismiss="modal">
-                        Post Another Ad
-                    </button>
-                </div>
-
-                <div class="listing-redirect-bar mt-4">
-                    <div class="listing-redirect-progress" id="redirect-progress"></div>
-                </div>
-                <small class="text-muted d-block mt-2">Redirecting to your listings in <strong id="redirect-counter">5</strong>s...</small>
-            </div>
-        </div>
-    </div>
-</div>
 
 <script>
 (function() {
@@ -230,7 +210,11 @@ require_once __DIR__ . '/includes/navbar.php';
 
     const form            = document.getElementById('sell-form');
     const brandSelect     = document.getElementById('brand_id');
+    const modelSelectWrap = document.getElementById('model-select-wrapper');
+    const modelTextWrap   = document.getElementById('model-text-wrapper');
     const modelSelect     = document.getElementById('model');
+    const modelCustom     = document.getElementById('model_custom');
+    const modelCustomHint = document.getElementById('model-custom-hint');
     const conditionNew    = document.getElementById('condition_new');
     const conditionOld    = document.getElementById('condition_old');
     const priceInput      = document.getElementById('price');
@@ -248,15 +232,114 @@ require_once __DIR__ . '/includes/navbar.php';
 
     let isUserCustomEdited = false;
 
+    // Concise processor specifications by brand category (kept short so dropdown opens downwards)
+    const APPLE_PROCESSORS = [
+        'Apple M4',
+        'Apple M3 Pro / Max',
+        'Apple M3',
+        'Apple M2 Pro / Max',
+        'Apple M2',
+        'Apple M1'
+    ];
+
+    const NON_APPLE_PROCESSORS = [
+        'Intel Core Ultra 7 / 9',
+        'Intel Core i9',
+        'Intel Core i7',
+        'Intel Core i5',
+        'Intel Core i3',
+        'AMD Ryzen 9',
+        'AMD Ryzen 7',
+        'AMD Ryzen 5'
+    ];
+
+    function updateProcessorsForBrand() {
+        const selectedOpt = brandSelect.options[brandSelect.selectedIndex];
+        const brandName = selectedOpt ? selectedOpt.text.toLowerCase().trim() : '';
+        const isApple = brandName.includes('apple');
+        const previousVal = processorSelect.value;
+
+        processorSelect.innerHTML = '<option value="">-- Optional --</option>';
+
+        if (isApple) {
+            APPLE_PROCESSORS.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.textContent = p;
+                if (p === previousVal) opt.selected = true;
+                processorSelect.appendChild(opt);
+            });
+        } else if (brandName && brandSelect.selectedIndex > 0) {
+            NON_APPLE_PROCESSORS.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.textContent = p;
+                if (p === previousVal) opt.selected = true;
+                processorSelect.appendChild(opt);
+            });
+        }
+    }
+
     function getSelectedCondition() {
-        if (conditionNew.checked) return 'new';
-        if (conditionOld.checked) return 'old';
-        return 'new';
+        if (conditionNew && conditionNew.checked) return 'new';
+        if (conditionOld) {
+            return (conditionOld.value || (conditionOld.checked ? 'old' : '')).toLowerCase() || 'old';
+        }
+        return 'old';
+    }
+
+    function isTextInputActive() {
+        return modelTextWrap && !modelTextWrap.classList.contains('d-none');
+    }
+
+    function getSelectedModelName() {
+        if (isTextInputActive()) {
+            return modelCustom ? modelCustom.value.trim() : '';
+        }
+        return modelSelect ? modelSelect.value.trim() : '';
+    }
+
+    function switchToModelTextInput() {
+        if (modelSelectWrap) modelSelectWrap.classList.add('d-none');
+        if (modelTextWrap) modelTextWrap.classList.remove('d-none');
+        
+        if (modelSelect) {
+            modelSelect.removeAttribute('required');
+            modelSelect.disabled = true;
+        }
+        if (modelCustom) {
+            modelCustom.setAttribute('required', 'required');
+            modelCustom.disabled = false;
+            modelCustom.focus();
+        }
+
+        if (modelCustomHint) {
+            modelCustomHint.innerHTML = '<i class="bi bi-stars text-primary me-1"></i><strong>New brand:</strong> Type the exact laptop model name.';
+        }
+
+        autoUpdateDescription();
+    }
+
+    function switchToModelSelect() {
+        if (modelTextWrap) modelTextWrap.classList.add('d-none');
+        if (modelSelectWrap) modelSelectWrap.classList.remove('d-none');
+
+        if (modelCustom) {
+            modelCustom.removeAttribute('required');
+            modelCustom.disabled = true;
+            modelCustom.value = '';
+        }
+        if (modelSelect) {
+            modelSelect.setAttribute('required', 'required');
+            modelSelect.disabled = false;
+        }
+
+        autoUpdateDescription();
     }
 
     function buildAutoDescription() {
         const brandName = brandSelect.selectedIndex > 0 ? brandSelect.options[brandSelect.selectedIndex].text.replace('-- Select Brand --', '').trim() : '';
-        const modelName = modelSelect.value ? modelSelect.value.trim() : '';
+        const modelName = getSelectedModelName();
         const condition = getSelectedCondition();
         const condLabel = condition === 'new' ? 'Brand New (100% Unused / Sealed)' : 'Verified Pre-Owned (Good Working Condition)';
         const priceVal = priceInput.value.trim();
@@ -271,12 +354,17 @@ require_once __DIR__ . '/includes/navbar.php';
         let lines = [];
         
         // Header
-        let productTitle = brandName;
-        if (modelName) {
-            productTitle = (brandName && !modelName.toLowerCase().startsWith(brandName.toLowerCase()))
+        let productTitle = '';
+        if (brandName && modelName) {
+            productTitle = (!modelName.toLowerCase().startsWith(brandName.toLowerCase()))
                 ? (brandName + ' ' + modelName)
                 : modelName;
+        } else if (brandName) {
+            productTitle = brandName + ' Laptop';
+        } else if (modelName) {
+            productTitle = modelName;
         }
+
         if (productTitle) {
             lines.push('🌟 ' + productTitle);
         }
@@ -314,52 +402,89 @@ require_once __DIR__ . '/includes/navbar.php';
         }
     }
 
-    // 1. Brand → Model dependent dropdown
+    // 1. Brand → Model & Processor filter dependent dropdown
     brandSelect.addEventListener('change', function() {
         const brandId = this.value;
-        modelSelect.innerHTML = '<option value="">Select a brand first</option>';
-        modelSelect.disabled = true;
+
+        // Dynamically update processors according to selected brand
+        updateProcessorsForBrand();
+
+        // Reset state
+        if (modelCustom) modelCustom.value = '';
+        if (modelSelect) {
+            modelSelect.innerHTML = '<option value="">Select a brand first</option>';
+            modelSelect.disabled = true;
+        }
+        if (modelSelectWrap) modelSelectWrap.classList.remove('d-none');
+        if (modelTextWrap) modelTextWrap.classList.add('d-none');
+
         autoUpdateDescription();
         if (!brandId) return;
-        modelSelect.innerHTML = '<option value="">Loading models…</option>';
+
+        if (modelSelect) modelSelect.innerHTML = '<option value="">Loading models…</option>';
+
         fetch(BASE + '/get_models.php?brand_id=' + encodeURIComponent(brandId))
         .then(resp => resp.json())
         .then(data => {
-            modelSelect.innerHTML = '<option value="">-- Select Model --</option>';
-            data.models.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m.model_name;
-                opt.textContent = m.model_name + (m.year ? ' (' + m.year + ')' : '');
-                modelSelect.appendChild(opt);
-            });
-            modelSelect.disabled = false;
+            if (!data.success || !data.models || data.models.length === 0) {
+                switchToModelTextInput();
+            } else {
+                switchToModelSelect();
+                modelSelect.innerHTML = '<option value="">-- Select Model --</option>';
+                data.models.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.model_name;
+                    opt.textContent = m.model_name + (m.year ? ' (' + m.year + ')' : '');
+                    modelSelect.appendChild(opt);
+                });
+                modelSelect.disabled = false;
+            }
             autoUpdateDescription();
+        })
+        .catch(() => {
+            switchToModelTextInput();
         });
     });
 
+    if (modelSelect) {
+        modelSelect.addEventListener('change', autoUpdateDescription);
+    }
+
+    if (modelCustom) {
+        modelCustom.addEventListener('input', autoUpdateDescription);
+    }
+
     function syncConditionUI() {
-        const isNew = conditionNew.checked;
-        const newOption = conditionNew.closest('.condition-radio-option');
-        const oldOption = conditionOld.closest('.condition-radio-option');
-        if (newOption && oldOption) {
-            newOption.classList.toggle('active', isNew);
-            oldOption.classList.toggle('active', !isNew);
+        if (conditionNew && conditionOld && conditionNew.type === 'radio') {
+            const isNew = conditionNew.checked;
+            const newOption = conditionNew.closest('.condition-radio-option');
+            const oldOption = conditionOld.closest('.condition-radio-option');
+            if (newOption && oldOption) {
+                newOption.classList.toggle('active', isNew);
+                oldOption.classList.toggle('active', !isNew);
+            }
         }
     }
 
-    modelSelect.addEventListener('change', autoUpdateDescription);
-    conditionNew.addEventListener('change', function() {
-        syncConditionUI();
-        autoUpdateDescription();
-    });
-    conditionOld.addEventListener('change', function() {
-        syncConditionUI();
-        autoUpdateDescription();
-    });
+    if (conditionNew) {
+        conditionNew.addEventListener('change', function() {
+            syncConditionUI();
+            autoUpdateDescription();
+        });
+    }
+    if (conditionOld && conditionOld.type === 'radio') {
+        conditionOld.addEventListener('change', function() {
+            syncConditionUI();
+            autoUpdateDescription();
+        });
+    }
     priceInput.addEventListener('input', autoUpdateDescription);
     processorSelect.addEventListener('change', autoUpdateDescription);
     ramSelect.addEventListener('change', autoUpdateDescription);
     storageSelect.addEventListener('change', autoUpdateDescription);
+
+    // Initial processor list population on load
+    updateProcessorsForBrand();
 
     descInput.addEventListener('input', function() {
         if (descInput.value.trim() !== '') {
@@ -381,7 +506,7 @@ require_once __DIR__ . '/includes/navbar.php';
 
     function runDuplicateCheck() {
         const brandId = brandSelect.value;
-        const model   = modelSelect.value;
+        const model   = getSelectedModelName();
         const cond    = getSelectedCondition();
 
         if (!brandId || !model || cond !== 'new') {
@@ -424,9 +549,13 @@ require_once __DIR__ . '/includes/navbar.php';
     }
 
     // 3. UI Helpers
-    function showAlert(msg, type) {
-        formAlert.className = 'alert alert-' + type + ' rounded-3 shadow-sm mb-4';
-        formAlert.textContent = msg;
+    function showAlert(content, type) {
+        formAlert.className = 'alert alert-' + type + ' border-0 rounded-4 shadow-sm p-4 mb-4';
+        if (typeof content === 'string' && content.includes('<')) {
+            formAlert.innerHTML = content;
+        } else {
+            formAlert.textContent = content;
+        }
         formAlert.classList.remove('d-none');
         formAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -440,7 +569,21 @@ require_once __DIR__ . '/includes/navbar.php';
             const group = document.getElementById('condition_type_group');
             if (group) group.classList.add('is-invalid');
             const errDiv = document.getElementById('condition_type-error');
-            if (errDiv) errDiv.textContent = msg;
+            if (errDiv) {
+                errDiv.textContent = msg;
+                errDiv.style.display = 'block';
+            }
+            return;
+        }
+        if (fieldId === 'model') {
+            const targetEl = isTextInputActive() ? modelCustom : modelSelect;
+            if (targetEl) targetEl.classList.add('is-invalid');
+            const errDiv = document.getElementById('model-error');
+            if (errDiv) {
+                errDiv.textContent = msg;
+                errDiv.style.display = 'block';
+            }
+            if (targetEl) targetEl.focus();
             return;
         }
         const input = document.getElementById(fieldId);
@@ -451,6 +594,7 @@ require_once __DIR__ . '/includes/navbar.php';
         }
         if (errDiv) {
             errDiv.textContent = msg;
+            errDiv.style.display = 'block';
         }
     }
 
@@ -463,6 +607,7 @@ require_once __DIR__ . '/includes/navbar.php';
         if (condGroup) condGroup.classList.remove('is-invalid');
         form.querySelectorAll('.invalid-feedback').forEach(function(el) {
             el.textContent = '';
+            el.style.display = '';
         });
     }
 
@@ -471,9 +616,21 @@ require_once __DIR__ . '/includes/navbar.php';
         e.preventDefault();
         clearErrors();
 
+        const finalModel = getSelectedModelName();
+        if (!finalModel) {
+            setFieldError('model', 'Model name is required.');
+            return;
+        }
+
+        const imageInput = document.getElementById('image');
+        if (!imageInput || !imageInput.files || imageInput.files.length === 0) {
+            setFieldError('image', 'Please upload a photo of the laptop.');
+            return;
+        }
+
         submitBtn.disabled = true;
         const originalHtml = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Listing Your Laptop…';
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Publishing Your Listing…';
 
         runDuplicateCheck().then(function(ok) {
             if (!ok) {
@@ -483,6 +640,10 @@ require_once __DIR__ . '/includes/navbar.php';
             }
 
             const fd = new FormData(form);
+            fd.set('model', finalModel);
+            if (modelCustom && modelCustom.value.trim()) {
+                fd.set('model_custom', modelCustom.value.trim());
+            }
 
             fetch(BASE + '/submit_laptop.php', {
                 method: 'POST',
@@ -495,41 +656,81 @@ require_once __DIR__ . '/includes/navbar.php';
                 submitBtn.innerHTML = originalHtml;
 
                 if (data.success) {
-                    showAlert(data.message, 'success');
+                    const successMessage = data.message || 'Your listing has been submitted and is awaiting admin approval!';
 
-                    // 1. Trigger confetti
-                    if (typeof confetti === 'function') {
-                        confetti({ particleCount: 160, spread: 80, origin: { y: 0.6 } });
+                    // Launch Firecrackers Celebration Animation
+                    if (typeof window.launchFirecrackers === 'function') {
+                        window.launchFirecrackers();
+                    } else if (typeof confetti === 'function') {
+                        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, zIndex: 10000000 });
                     }
 
-                    // 2. Reset form
+                    // 1. Trigger colorful popup toast
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('🎉 ' + successMessage, 'success', 3500);
+                    }
+
+                    // 2. Render smooth login-style animated success modal
+                    let successOverlay = document.getElementById('sell-success-modal');
+                    if (!successOverlay) {
+                        successOverlay = document.createElement('div');
+                        successOverlay.id = 'sell-success-modal';
+                        successOverlay.className = 'auth-success-backdrop';
+                        document.body.appendChild(successOverlay);
+                    }
+
+                    successOverlay.innerHTML = `
+                        <div class="auth-success-card">
+                            <div class="auth-success-icon-wrap">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                            <h3 class="auth-success-title">🎉 Listing Published Successfully!</h3>
+                            <p class="auth-success-text">
+                                Your laptop ad has been created and submitted for admin review.<br>
+                                <span class="d-inline-block mt-2 text-info-emphasis small fw-medium">
+                                    <i class="bi bi-clock-history me-1"></i> Redirecting to your listings in 3 seconds...
+                                </span>
+                            </p>
+                            <div class="auth-success-progress-track">
+                                <div class="auth-success-progress-bar" id="sell-success-progress-bar" style="transition: width 3.0s linear !important;"></div>
+                            </div>
+                        </div>
+                    `;
+
+                    requestAnimationFrame(() => {
+                        successOverlay.classList.add('active');
+                        setTimeout(() => {
+                            const progressBar = document.getElementById('sell-success-progress-bar');
+                            if (progressBar) {
+                                progressBar.style.width = '100%';
+                            }
+                        }, 50);
+                    });
+
+                    // 3. Reset form fields
                     form.reset();
+                    isUserCustomEdited = false;
                     syncConditionUI();
-                    modelSelect.innerHTML = '<option value="">Select a brand first</option>';
-                    modelSelect.disabled = true;
+                    if (modelSelectWrap) modelSelectWrap.classList.remove('d-none');
+                    if (modelTextWrap) modelTextWrap.classList.add('d-none');
+                    if (modelSelect) {
+                        modelSelect.innerHTML = '<option value="">Select a brand first</option>';
+                        modelSelect.disabled = true;
+                    }
+                    const imgPreview = document.getElementById('img-preview');
+                    if (imgPreview) {
+                        imgPreview.src = '#';
+                        imgPreview.classList.add('d-none');
+                    }
 
-                    // 3. Show Celebration Modal
-                    const modalEl = document.getElementById('listingSuccessModal');
-                    const bsModal = new bootstrap.Modal(modalEl);
-                    bsModal.show();
-
-                    // 4. Countdown redirect
-                    const progressBar = document.getElementById('redirect-progress');
-                    const counterEl = document.getElementById('redirect-counter');
-                    let timeLeft = 5.0;
-
-                    const interval = setInterval(function() {
-                        timeLeft -= 0.1;
-                        if (counterEl) counterEl.textContent = Math.max(0, Math.ceil(timeLeft));
-                        if (progressBar) progressBar.style.width = Math.min(100, Math.max(0, ((5.0 - timeLeft) / 5.0) * 100)) + '%';
-
-                        if (timeLeft <= 0) {
-                            clearInterval(interval);
+                    // 4. Smooth exit dissolve at 2.75s, then seamless redirect at 3.0s
+                    setTimeout(() => {
+                        successOverlay.classList.add('exiting');
+                        document.body.classList.add('lapify-page-leaving');
+                        setTimeout(() => {
                             window.location.href = BASE + '/my-listings.php';
-                        }
-                    }, 100);
-
-                    document.getElementById('post-another-btn').addEventListener('click', () => clearInterval(interval));
+                        }, 250);
+                    }, 2750);
                 } else {
                     showAlert(data.message || 'Please fix the highlighted errors.', 'danger');
                     if (data.errors && typeof data.errors === 'object') {

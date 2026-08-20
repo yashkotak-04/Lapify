@@ -76,94 +76,114 @@ require_once __DIR__ . '/includes/navbar.php';
     <?php displayFlash(); ?>
 
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-        <div class="card-body p-0">
+        <div class="card-body p-3.5 p-md-4">
             <?php if (mysqli_num_rows($result) > 0): ?>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light text-muted small text-uppercase font-weight-bold">
-                            <tr>
-                                <th class="ps-4">Laptop</th>
-                                <th>Type</th>
-                                <th>Price</th>
-                                <th>Condition</th>
-                                <th>Stock</th>
-                                <th>Status</th>
-                                <th>Date Posted</th>
-                                <th class="text-end pe-4">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($laptop = mysqli_fetch_assoc($result)): 
-                                $img_src = getLaptopImageUrl($laptop) ?: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=200&q=80';
-                            ?>
-                                <tr>
-                                    <td class="ps-4">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <img src="<?= escape($img_src) ?>" alt="" class="rounded-3" style="width: 56px; height: 42px; object-fit: cover;">
-                                            <div>
-                                                <div class="fw-bold text-white"><?= escape($laptop['model']) ?></div>
-                                                <div class="small text-muted"><?= escape($laptop['brand_name']) ?></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge <?= $laptop['type'] === 'New' ? 'badge-type-new' : 'badge-type-old' ?>">
-                                            <?= escape($laptop['type']) ?>
+                <div class="d-flex flex-column gap-3">
+                    <?php while ($laptop = mysqli_fetch_assoc($result)): 
+                        $img_src = getLaptopImageUrl($laptop) ?: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=300&q=80';
+                        $listing_state = strtolower((string)($laptop['status'] ?? $laptop['approval_status'] ?? 'pending'));
+                        $is_new = (strtolower((string)($laptop['type'] ?? '')) === 'new');
+                        
+                        if (in_array($listing_state, ['approved', 'available', 'active'])) {
+                            $status_class = 'status-pill-active';
+                            $status_label = 'Active';
+                        } elseif ($listing_state === 'rejected') {
+                            $status_class = 'status-pill-rejected';
+                            $status_label = 'Rejected';
+                        } else {
+                            $status_class = 'status-pill-pending';
+                            $status_label = 'Pending Approval';
+                        }
+                    ?>
+                        <div class="posting-item-card p-3.5 p-md-4 rounded-4 border d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-4">
+                            <!-- Left: Thumbnail & Laptop Info with generous spacing -->
+                            <div class="d-flex align-items-center" style="min-width: 0;">
+                                <div class="posting-thumb-wrapper me-3.5 me-md-4 flex-shrink-0">
+                                    <img src="<?= escape($img_src) ?>" alt="<?= escape($laptop['model']) ?>" class="posting-thumb rounded-3 border shadow-2xs" style="width: 82px; height: 60px; object-fit: cover;">
+                                </div>
+                                <div class="d-flex flex-column gap-1" style="min-width: 0;">
+                                    <h5 class="fw-bold mb-0 text-dark posting-title text-truncate" style="font-size: 1.1rem;" title="<?= escape($laptop['model']) ?>">
+                                        <?= escape($laptop['model']) ?>
+                                    </h5>
+                                    <div class="d-flex flex-wrap align-items-center gap-2 text-muted small" style="font-size: 0.85rem;">
+                                        <span class="fw-semibold text-secondary"><i class="bi bi-tag-fill text-primary me-1"></i><?= escape($laptop['brand_name'] ?? 'Laptop') ?></span>
+                                        <span class="text-slate-300">•</span>
+                                        <span><i class="bi bi-clock me-1"></i><?= formatDate($laptop['created_at']) ?></span>
+                                        <span class="text-slate-300">•</span>
+                                        <span class="badge rounded-pill px-2.5 py-0.5 <?= $is_new ? 'badge-type-new' : 'badge-type-used' ?>">
+                                            <?= $is_new ? 'Brand New' : 'Pre-Owned' ?>
                                         </span>
-                                    </td>
-                                    <td class="fw-bold text-primary">
+                                        <?php if (!empty($laptop['condition'])): ?>
+                                            <span class="text-slate-300">•</span>
+                                            <span class="text-slate-600"><?= escape($laptop['condition']) ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <?php if ($listing_state === 'rejected' && !empty($laptop['rejection_reason'])): ?>
+                                        <div class="small text-danger mt-1">
+                                            <i class="bi bi-exclamation-circle me-1"></i>Reason: <?= escape($laptop['rejection_reason']) ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
+                            <!-- Right: Price, Status, Stock, and Actions with generous spacing -->
+                            <div class="d-flex flex-wrap align-items-center justify-content-between justify-content-lg-end gap-4 ms-lg-auto flex-shrink-0">
+                                <!-- Price & Stock -->
+                                <div class="text-start text-lg-end">
+                                    <div class="fw-bold text-primary" style="font-size: 1.25rem;">
                                         <?= formatPrice($laptop['price']) ?>
-                                    </td>
-                                    <td class="small text-secondary">
-                                        <?= escape($laptop['condition'] ?? 'N/A') ?>
-                                    </td>
-                                    <td>
-                                        <span class="badge <?= ((int)($laptop['quantity'] ?? 1) > 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger') ?> rounded-pill">
-                                            <?= ((int)($laptop['quantity'] ?? 1) > 0 ? 'In Stock' : 'Out of Stock') ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <?php $listing_state = strtolower((string)($laptop['status'] ?? $laptop['approval_status'] ?? 'pending')); ?>
-                                        <div class="d-flex flex-column gap-2">
-                                            <span class="badge rounded-pill <?= $listing_state === 'approved' ? 'bg-success-subtle text-success' : ($listing_state === 'rejected' ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning') ?>">
-                                                <?= escape(ucfirst($listing_state)) ?>
-                                            </span>
-                                            <?php if ($listing_state === 'rejected' && !empty($laptop['rejection_reason'])): ?>
-                                                <small class="text-muted">Reason: <?= escape($laptop['rejection_reason']) ?></small>
-                                            <?php endif; ?>
-                                            <?php if ($listing_state === 'rejected'): ?>
-                                                <a href="my-listings.php?action=resubmit&id=<?= $laptop['id'] ?>" class="btn btn-sm btn-outline-primary rounded-pill">Resubmit</a>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-                                    <td class="small text-muted">
-                                        <?= formatDate($laptop['created_at']) ?>
-                                    </td>
-                                    <td class="text-end pe-4">
-                                        <div class="btn-group">
-                                            <a href="sell.php?edit_id=<?= $laptop['id'] ?>" class="btn btn-sm btn-light" title="Edit Listing"><i class="bi bi-pencil"></i></a>
-                                            <a href="laptop-details.php?id=<?= $laptop['id'] ?>" class="btn btn-sm btn-light" title="View Listing"><i class="bi bi-eye"></i></a>
-                                            <button type="button" class="btn btn-sm btn-light text-danger" 
-                                                    data-bs-toggle="modal" data-bs-target="#deleteConfirmModal" 
-                                                    data-id="<?= $laptop['id'] ?>" 
-                                                    data-title="<?= escape($laptop['model']) ?>" 
-                                                    data-delete-url="my-listings.php?action=delete&id=<?= $laptop['id'] ?>" 
-                                                    title="Delete Listing">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        </tbody>
-                    </table>
+                                    </div>
+                                    <div class="text-muted small" style="font-size: 0.8rem;">
+                                        <?= ((int)($laptop['quantity'] ?? 1) > 0 ? '<span class="text-success fw-semibold"><i class="bi bi-check2"></i> In Stock</span>' : '<span class="text-danger fw-semibold"><i class="bi bi-x"></i> Out of Stock</span>') ?>
+                                    </div>
+                                </div>
+
+                                <!-- Status Badge -->
+                                <div>
+                                    <span class="status-pill <?= $status_class ?>">
+                                        <span class="status-dot"></span>
+                                        <span><?= escape($status_label) ?></span>
+                                    </span>
+                                </div>
+
+                                <!-- Action Buttons with generous spacing -->
+                                <div class="d-flex align-items-center gap-2">
+                                    <?php if ($listing_state === 'rejected'): ?>
+                                        <a href="my-listings.php?action=resubmit&id=<?= $laptop['id'] ?>" class="btn btn-sm btn-outline-warning rounded-pill px-3 py-2 fw-semibold shadow-sm">
+                                            <i class="bi bi-arrow-repeat me-1"></i>Resubmit
+                                        </a>
+                                    <?php endif; ?>
+                                    <a href="laptop-details.php?id=<?= $laptop['id'] ?>" class="btn btn-outline-primary rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                        <span>View</span>
+                                    </a>
+                                    <a href="sell.php?edit_id=<?= $laptop['id'] ?>" class="btn btn-light border rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;" title="Edit Listing">
+                                        <i class="bi bi-pencil text-secondary"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-light border text-danger rounded-circle d-flex align-items-center justify-content-center btn-delete-listing" style="width: 40px; height: 40px;"
+                                            data-bs-toggle="modal" data-bs-target="#deleteConfirmModal" 
+                                            data-id="<?= $laptop['id'] ?>" 
+                                            data-title="<?= escape($laptop['model']) ?>" 
+                                            data-delete-url="my-listings.php?action=delete&id=<?= $laptop['id'] ?>" 
+                                            title="Delete Listing">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endwhile; ?>
                 </div>
             <?php else: ?>
-                <div class="text-center py-5">
-                    <div class="fs-1 text-muted mb-3"><i class="bi bi-laptop-fill"></i></div>
-                    <h5 class="fw-bold">No Laptop Listings Yet</h5>
-                    <p class="text-muted">You haven't published any laptop listings for sale.</p>
-                    <a href="sell.php" class="btn btn-primary rounded-pill px-4">Post Your First Laptop</a>
+                <div class="text-center py-5 px-4">
+                    <div class="bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
+                        <i class="bi bi-laptop fs-2"></i>
+                    </div>
+                    <h5 class="fw-bold mb-1">No Laptop Listings Yet</h5>
+                    <p class="text-muted small mb-3 mx-auto" style="max-width: 380px;">You haven't published any laptop listings for sale yet.</p>
+                    <a href="sell.php" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>Post Your First Laptop</span>
+                    </a>
                 </div>
             <?php endif; ?>
         </div>
@@ -171,19 +191,26 @@ require_once __DIR__ . '/includes/navbar.php';
 </div>
 
 <!-- Modal Confirmation for Delete -->
-<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true" style="z-index: 1065;">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 rounded-4 shadow-lg">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Confirmation</h5>
+        <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold text-danger d-flex align-items-center gap-2" id="deleteConfirmModalLabel">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span>Delete Listing</span>
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body py-4">
-                Are you sure you want to delete the listing <strong class="modal-item-title text-dark"></strong>? This action cannot be undone.
+            <div class="modal-body py-3 px-4">
+                <p class="mb-0 text-secondary">
+                    Are you sure you want to permanently delete <strong class="modal-item-title text-dark">this listing</strong>? This action cannot be undone and will remove the listing from Lapify.
+                </p>
             </div>
-            <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-light rounded-3 px-4 font-weight-bold" data-bs-dismiss="modal">Cancel</button>
-                <a href="#" class="btn btn-danger btn-confirm-delete rounded-3 px-4 font-weight-bold">Yes, Delete</a>
+            <div class="modal-footer border-0 pt-2 pb-4 px-4 gap-2">
+                <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold border" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" class="btn btn-danger btn-confirm-delete rounded-pill px-4 fw-bold shadow-sm">
+                    <i class="bi bi-trash me-1"></i> Yes, Delete
+                </a>
             </div>
         </div>
     </div>

@@ -109,8 +109,8 @@ $result = mysqli_stmt_get_result($stmt);
             <h2 class="fw-bold mb-1"><i class="bi bi-heart-fill text-danger me-2"></i>My Saved Wishlist</h2>
             <p class="text-muted mb-0">Saved laptop listings you are watching</p>
         </div>
-        <a href="buy.php" class="btn btn-outline-primary rounded-pill btn-sm px-3 fw-bold">
-            <i class="bi bi-plus-lg me-1"></i>Browse More
+        <a href="buy.php" class="btn-lapify-view-more">
+            <i class="bi bi-plus-lg"></i> <span>Browse More</span>
         </a>
     </div>
 

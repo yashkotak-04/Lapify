@@ -24,7 +24,11 @@ if ($curr) {
     $parts = explode(' ', trim($curr['full_name'] ?? ''), 2);
     $defaultFirst = $parts[0] ?? '';
     $defaultLast  = $parts[1] ?? '';
-    $defaultPhone = $curr['phone'] ?? '';
+    $rawPhone = preg_replace('/\D/', '', $curr['phone'] ?? '');
+    if (strlen($rawPhone) > 10 && str_starts_with($rawPhone, '91')) {
+        $rawPhone = substr($rawPhone, 2);
+    }
+    $defaultPhone = substr($rawPhone, -10);
 }
 
 $errors = [];
@@ -46,6 +50,15 @@ if ($isShippingSubmit) {
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         $errors[] = 'Session expired. Please try again.';
     } else {
+        $cleanPhone = preg_replace('/\D/', '', $_POST['phone'] ?? '');
+        if (strlen($cleanPhone) > 10 && str_starts_with($cleanPhone, '91')) {
+            $cleanPhone = substr($cleanPhone, 2);
+        }
+        if (strlen($cleanPhone) > 10) {
+            $cleanPhone = substr($cleanPhone, -10);
+        }
+        $cleanZip = preg_replace('/\D/', '', $_POST['zip'] ?? '');
+
         $shipping = [
             'first_name'   => trim(sanitizeInput($_POST['first_name'] ?? '')),
             'last_name'    => trim(sanitizeInput($_POST['last_name'] ?? '')),
@@ -53,8 +66,8 @@ if ($isShippingSubmit) {
             'apt'          => trim(sanitizeInput($_POST['apt'] ?? '')),
             'city'         => trim(sanitizeInput($_POST['city'] ?? '')),
             'state'        => trim(sanitizeInput($_POST['state'] ?? '')),
-            'zip'          => trim(sanitizeInput($_POST['zip'] ?? '')),
-            'phone'        => trim(sanitizeInput($_POST['phone'] ?? '')),
+            'zip'          => $cleanZip,
+            'phone'        => $cleanPhone,
             'save_address' => !empty($_POST['save_address']),
         ];
         $shippingMethod = ($_POST['shipping_method'] ?? 'standard') === 'express' ? 'express' : 'standard';
