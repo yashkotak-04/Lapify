@@ -1,5 +1,7 @@
 # Database Dumps & Backups
 *.sql
+!sql/database.sql
+!database.sql
 backup_lapify.sql
 sql/backup_before_renumber.sql
 
