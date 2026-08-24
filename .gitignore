@@ -2,6 +2,8 @@
 *.sql
 !sql/database.sql
 !database.sql
+!schema.sql
+!scheme.sql
 backup_lapify.sql
 sql/backup_before_renumber.sql
 
