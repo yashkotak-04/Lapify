@@ -118,17 +118,21 @@ $recent_users = mysqli_query($conn, "SELECT u.*, CASE WHEN a.email IS NOT NULL T
                                     $listing_status = strtolower((string)($laptop['status'] ?? $laptop['approval_status'] ?? 'pending'));
                                 ?>
                                     <div class="posting-item-card p-3 rounded-3 border d-flex align-items-center justify-content-between gap-3">
-                                        <div class="d-flex align-items-center gap-3" style="min-width: 0;">
-                                            <img src="<?= escape($img_src) ?>" alt="" class="posting-thumb rounded-3 border flex-shrink-0 me-3" style="width: 58px; height: 44px; object-fit: cover;">
-                                            <div class="d-flex flex-column gap-0.5 ps-1" style="min-width: 0;">
-                                                <h6 class="fw-bold mb-0 text-dark text-truncate" style="font-size: 0.96rem;" title="<?= escape($laptop['model']) ?>"><?= escape($laptop['model']) ?></h6>
-                                                <div class="small text-muted">
-                                                    <span><?= escape($laptop['brand_name']) ?></span> • <span><?= escape($laptop['seller_name']) ?></span>
+                                        <div class="d-flex align-items-center gap-3 overflow-hidden" style="min-width: 0; flex: 1 1 auto;">
+                                            <div class="posting-thumb-wrapper flex-shrink-0" style="width: 60px; height: 46px; border-radius: 8px;">
+                                                <img src="<?= escape($img_src) ?>" alt="<?= escape($laptop['model']) ?>" class="posting-thumb">
+                                            </div>
+                                            <div class="d-flex flex-column gap-0.5 overflow-hidden" style="min-width: 0;">
+                                                <h6 class="fw-bold mb-0 text-dark text-truncate" style="font-size: 0.95rem;" title="<?= escape($laptop['model']) ?>"><?= escape($laptop['model']) ?></h6>
+                                                <div class="small text-muted text-truncate d-flex align-items-center gap-1.5" style="font-size: 0.82rem;">
+                                                    <span class="fw-semibold text-secondary text-truncate"><?= escape($laptop['brand_name'] ?? 'Laptop') ?></span>
+                                                    <span class="text-slate-300">•</span>
+                                                    <span class="text-truncate"><?= escape($laptop['seller_name'] ?? 'Seller') ?></span>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="d-flex align-items-center gap-3 ms-auto flex-shrink-0">
-                                            <div class="fw-bold text-primary" style="font-size: 1.05rem;"><?= formatPrice($laptop['price']) ?></div>
+                                            <div class="fw-bold text-primary" style="font-size: 1.05rem; white-space: nowrap;"><?= formatPrice($laptop['price']) ?></div>
                                             <span class="status-pill status-pill-<?= in_array($listing_status, ['approved', 'active']) ? 'active' : ($listing_status === 'rejected' ? 'rejected' : 'pending') ?>">
                                                 <span class="status-dot"></span>
                                                 <span><?= escape(ucfirst($listing_status)) ?></span>

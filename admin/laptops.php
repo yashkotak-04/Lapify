@@ -378,7 +378,9 @@ if ($brands_list) {
                             <div class="posting-item-card p-3.5 p-md-4 rounded-4 border d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-4">
                                 <!-- Left: Thumbnail & Laptop Info -->
                                 <div class="d-flex align-items-center gap-3 gap-md-4" style="min-width: 0;">
-                                    <img src="<?= escape($img_src) ?>" alt="<?= escape($laptop['model']) ?>" loading="lazy" decoding="async" class="posting-thumb rounded-3 border flex-shrink-0 me-3" style="width: 76px; height: 56px; object-fit: cover;">
+                                    <div class="posting-thumb-wrapper flex-shrink-0 me-1" style="width: 76px; height: 56px; border-radius: 10px;">
+                                        <img src="<?= escape($img_src) ?>" alt="<?= escape($laptop['model']) ?>" loading="lazy" decoding="async" class="posting-thumb">
+                                    </div>
                                     <div class="d-flex flex-column gap-1 ps-1" style="min-width: 0;">
                                         <h5 class="fw-bold mb-0 text-dark posting-title text-truncate" style="font-size: 1.08rem;" title="<?= escape($laptop['model']) ?>">
                                             <?= escape($laptop['model']) ?>
