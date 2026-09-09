@@ -180,8 +180,10 @@ $old_result = mysqli_query($conn, $old_query);
                         <div class="text-uppercase small text-muted font-weight-bold tracking-wide mb-1">
                             <?= escape($laptop['brand_name']) ?>
                         </div>
-                        <h5 class="card-title fw-bold mb-2" title="<?= escape($laptop['model']) ?>">
-                            <?= escape($laptop['model']) ?>
+                        <h5 class="card-title fw-bold mb-2 text-truncate" style="max-width: 100%;" title="<?= escape($laptop['model']) ?>">
+                            <a href="laptop-details.php?id=<?= $laptop['id'] ?>" class="text-dark text-decoration-none">
+                                <?= escape($laptop['model']) ?>
+                            </a>
                         </h5>
                         <div class="small text-muted mb-3 d-flex flex-wrap gap-2">
                             <span><i class="bi bi-cpu me-1"></i><?= escape($laptop['processor'] ?? 'N/A') ?></span>

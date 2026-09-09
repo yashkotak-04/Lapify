@@ -884,7 +884,7 @@ footer h1, footer h2, footer h3, footer h4, footer h5, footer h6,
     object-fit: cover;
   }
   .card-laptop-horizontal .min-w-200 {
-    min-width: 200px;
+    min-width: 0;
   }
 }
 
@@ -929,7 +929,7 @@ footer h1, footer h2, footer h3, footer h4, footer h5, footer h6,
   display: inline-flex;
   align-items: center;
   padding: 0 !important;
-  margin: 0 2rem 0 0 !important;
+  margin: 0 1.25rem 0 0 !important;
   background: transparent !important;
   border: none !important;
 }
@@ -1490,10 +1490,10 @@ footer h1, footer h2, footer h3, footer h4, footer h5, footer h6,
 }
 
 .btn-edit-listing {
-  min-width: 145px !important;
-  padding-left: 1.35rem !important;
-  padding-right: 1.35rem !important;
-  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+  flex: 1 1 auto !important;
 }
 
 /* Ensure quick icon buttons have consistent sizing and hide accidental text */

@@ -3,8 +3,35 @@
 ob_start(); // Project-wide output-buffering safety net to avoid "headers already sent" corrupting downloads/redirects
 date_default_timezone_set('Asia/Kolkata');
 
+// Enhanced HTTPS detection (including behind Cloudflare, ByetHost/InfinityFree, or reverse proxies)
+$isHttps = (
+    (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off') ||
+    (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') ||
+    (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower($_SERVER['HTTP_X_FORWARDED_SSL']) === 'on') ||
+    (!empty($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443) ||
+    (!empty($_SERVER['HTTP_CF_VISITOR']) && strpos($_SERVER['HTTP_CF_VISITOR'], 'https') !== false)
+);
+
+// Secure Session Cookie Configuration
 if (session_status() === PHP_SESSION_NONE) {
+    // Configure session cookie parameters safely
+    $cookieParams = [
+        'lifetime' => 0,
+        'path' => '/',
+        'domain' => '',
+        'secure' => $isHttps,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ];
+    session_set_cookie_params($cookieParams);
     session_start();
+}
+
+// Global Security Headers (when running in web server)
+if (PHP_SAPI !== 'cli' && !headers_sent()) {
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: SAMEORIGIN');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
 }
 
 // Load .env file if present in project root
@@ -35,7 +62,7 @@ define('APP_NAME', 'Lapify');
 define('APP_TAGLINE', 'Buy New, Buy Used, & Sell Laptops Safely');
 
 // Base URL configuration (auto-detect or fallback)
-$protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
+$protocol = $isHttps ? "https" : "http";
 $host = trim($_SERVER['HTTP_HOST'] ?? 'localhost', ". ");
 if ($host === '') {
     $host = 'localhost';
