@@ -236,12 +236,20 @@ function renderFilterForm($brands, $search, $brand_filter, $type_filter, $condit
                     <input type="number" name="price_max" class="form-control form-control-sm rounded-3" placeholder="Max ₹" value="<?= $price_max !== null ? (int)$price_max : '' ?>" min="0" step="1">
                 </div>
             </div>
-            <!-- Quick Price Chips -->
-            <div class="d-flex flex-wrap gap-1.5 mt-2.5">
-                <a href="buy.php?price_max=50000" class="badge bg-light text-muted border text-decoration-none py-1.5 px-2">Under ₹50k</a>
-                <a href="buy.php?price_min=50000&price_max=100000" class="badge bg-light text-muted border text-decoration-none py-1.5 px-2">₹50k - ₹1L</a>
-                <a href="buy.php?price_min=100000&price_max=200000" class="badge bg-light text-muted border text-decoration-none py-1.5 px-2">₹1L - ₹2L</a>
-                <a href="buy.php?price_min=200000" class="badge bg-light text-muted border text-decoration-none py-1.5 px-2">₹2L+</a>
+            <!-- Quick Price Chips (Symmetrical 2x2 Grid) -->
+            <div class="row g-2 mt-1">
+                <div class="col-6">
+                    <a href="buy.php?price_max=50000" class="btn btn-sm btn-light border text-secondary fw-semibold w-100 py-1.5 px-1 text-center text-decoration-none <?= ($price_max == 50000 && $price_min === null) ? 'active bg-primary-subtle text-primary border-primary' : '' ?>" style="font-size: 0.78rem;">Under ₹50k</a>
+                </div>
+                <div class="col-6">
+                    <a href="buy.php?price_min=50000&price_max=100000" class="btn btn-sm btn-light border text-secondary fw-semibold w-100 py-1.5 px-1 text-center text-decoration-none <?= ($price_min == 50000 && $price_max == 100000) ? 'active bg-primary-subtle text-primary border-primary' : '' ?>" style="font-size: 0.78rem;">₹50k - ₹1L</a>
+                </div>
+                <div class="col-6">
+                    <a href="buy.php?price_min=100000&price_max=200000" class="btn btn-sm btn-light border text-secondary fw-semibold w-100 py-1.5 px-1 text-center text-decoration-none <?= ($price_min == 100000 && $price_max == 200000) ? 'active bg-primary-subtle text-primary border-primary' : '' ?>" style="font-size: 0.78rem;">₹1L - ₹2L</a>
+                </div>
+                <div class="col-6">
+                    <a href="buy.php?price_min=200000" class="btn btn-sm btn-light border text-secondary fw-semibold w-100 py-1.5 px-1 text-center text-decoration-none <?= ($price_min == 200000 && $price_max === null) ? 'active bg-primary-subtle text-primary border-primary' : '' ?>" style="font-size: 0.78rem;">₹2L+</a>
+                </div>
             </div>
         </div>
 
