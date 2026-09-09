@@ -64,8 +64,10 @@ $old_result = mysqli_query($conn, $old_query);
                 <!-- Search Bar Form -->
                 <form action="buy.php" method="GET" class="hero-search-wrapper mb-4">
                     <div class="hero-search-input-pill">
-                        <i class="bi bi-search hero-search-icon"></i>
-                        <input type="text" name="search" class="hero-search-input" placeholder="Search by model, brand, processor (e.g. M3 Max, i7 13th Gen, RTX 4070)..." autocomplete="off">
+                        <div class="hero-search-field">
+                            <i class="bi bi-search hero-search-icon"></i>
+                            <input type="text" name="search" class="hero-search-input" placeholder="Search by model, brand, processor (e.g. M3 Max, i7 13th Gen, RTX 4070)..." autocomplete="off">
+                        </div>
                         <button type="submit" class="btn btn-hero-search">
                             <i class="bi bi-search"></i>
                             <span>Find Laptops</span>

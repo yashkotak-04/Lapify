@@ -170,7 +170,7 @@ require_once __DIR__ . '/includes/header.php';
             <div class="my-2">
                 <label class="auth-checkbox">
                     <input type="checkbox" id="terms-checkbox" required>
-                    <span>I agree to Lapify's <a href="about.php" class="auth-link">Terms of Service</a> and <a href="about.php" class="auth-link">Privacy Policy</a></span>
+                    <span>I agree to Lapify's <a href="terms.php" class="auth-link" target="_blank">Terms of Service</a> and <a href="privacy.php" class="auth-link" target="_blank">Privacy Policy</a></span>
                 </label>
             </div>
 

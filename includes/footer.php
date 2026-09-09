@@ -58,9 +58,9 @@
             <div class="d-flex flex-column flex-md-row align-items-center justify-content-between pt-2 pb-3 small">
                 <div>&copy; <?= date('Y') ?> Lapify. All rights reserved.</div>
                 <div class="d-flex gap-3 mt-2 mt-md-0">
-                    <a href="<?= BASE_URL ?>/about.php">Privacy Policy</a>
+                    <a href="<?= BASE_URL ?>/privacy.php">Privacy Policy</a>
                     <span>&bull;</span>
-                    <a href="<?= BASE_URL ?>/about.php">Terms of Service</a>
+                    <a href="<?= BASE_URL ?>/terms.php">Terms of Service</a>
                     <span>&bull;</span>
                     <a href="<?= BASE_URL ?>/admin/login.php">Admin Access</a>
                 </div>
