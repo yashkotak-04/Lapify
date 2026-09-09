@@ -661,12 +661,15 @@ input[type="file"]::file-selector-button:hover,
 /* Navbar Navigation List */
 .navbar-lapify .navbar-nav {
   gap: 0.4rem !important;
-  align-items: center;
+  align-items: stretch;
+  width: 100%;
 }
 
 @media (min-width: 992px) {
   .navbar-lapify .navbar-nav {
     gap: 0.5rem !important;
+    align-items: center;
+    width: auto;
   }
 }
 

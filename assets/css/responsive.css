@@ -187,25 +187,33 @@ button, .btn, .nav-link, .dropdown-item {
    5. Tablets & Medium Viewports (max-width: 991.98px)
    -------------------------------------------------------------------------- */
 @media (max-width: 991.98px) {
-  /* Navigation Offcanvas Drawer */
-  .navbar-lapify .offcanvas {
-    max-width: 320px;
-    background: var(--surface, #ffffff);
+  /* Navigation Offcanvas Drawer (Mobile & Tablet) */
+  .navbar-lapify .offcanvas,
+  .offcanvas-lapify {
+    width: min(345px, 88vw) !important;
+    max-width: 360px !important;
+    background: #ffffff;
+    box-shadow: -10px 0 35px rgba(2, 6, 23, 0.16) !important;
   }
 
-  [data-theme="dark"] .navbar-lapify .offcanvas {
-    background: #0f172a;
+  [data-theme="dark"] .navbar-lapify .offcanvas,
+  [data-theme="dark"] .offcanvas-lapify {
+    background: #0f172a !important;
   }
 
   .navbar-lapify .navbar-nav {
-    padding: 1.25rem 0;
+    padding: 0 !important;
     gap: 0.35rem;
+    align-items: stretch !important;
+    width: 100% !important;
+    flex-direction: column !important;
   }
 
   .navbar-lapify .nav-link {
-    padding: 0.75rem 1rem !important;
+    padding: 0.65rem 0.85rem !important;
     border-radius: 12px;
-    font-size: 1.05rem !important;
+    font-size: 0.98rem !important;
+    width: 100% !important;
   }
 
   .navbar-lapify .nav-link:hover,
@@ -579,10 +587,20 @@ button, .btn, .nav-link, .dropdown-item {
     margin: 0 3px;
   }
 
-  /* Form Fields */
-  .form-control, .form-select, .input-group-text {
-    font-size: 0.92rem;
-    padding: 0.6rem 0.75rem;
+  /* Form Fields & iOS Input Auto-Zoom Prevention */
+  .form-control, .form-select, .input-group-text, input[type="text"], input[type="email"], input[type="password"], input[type="number"], select, textarea {
+    font-size: 16px !important; /* Prevents iOS Safari from zooming in on input focus */
+    padding: 0.65rem 0.85rem;
+    min-height: 44px; /* Standard touch target height */
+  }
+
+  /* Smooth Breadcrumbs on Mobile */
+  .breadcrumb {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 4px;
+    white-space: nowrap;
   }
 
   /* Invoice Print View */
@@ -600,6 +618,11 @@ button, .btn, .nav-link, .dropdown-item {
   /* Admin Sidebar on mobile */
   .admin-sidebar {
     width: min(280px, 85vw);
+  }
+
+  /* Safe Area Inset Support for Apple iPhone Home Indicator */
+  .offcanvas-lapify .offcanvas-body {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem)) !important;
   }
 }
 
