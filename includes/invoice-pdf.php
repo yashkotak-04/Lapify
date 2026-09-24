@@ -142,35 +142,81 @@ function renderOrderInvoiceHtml($order, $customer, $items) {
 }
 
 function generateInvoicePdf($order, $customer, $items, $filename = null) {
+    @ini_set('memory_limit', '256M');
+    @set_time_limit(60);
+
     $html = renderOrderInvoiceHtml($order, $customer, $items);
+    $orderNum = preg_replace('/[^A-Za-z0-9_\-]/', '', (string)($order['order_number'] ?? 'order'));
 
-    while (ob_get_level()) {
-        ob_end_clean();
-    }
-
+    // Try rendering with Dompdf
     if (class_exists('Dompdf\\Dompdf')) {
-        $dompdf = new \Dompdf\Dompdf([
-            'isRemoteEnabled'      => true,
-            'isHtml5ParserEnabled' => true,
-        ]);
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->render();
+        try {
+            // Find a guaranteed writable temporary/cache directory
+            $tempDir = sys_get_temp_dir();
+            $customLogsDir = realpath(__DIR__ . '/../logs');
+            if (!$tempDir || !is_writable($tempDir)) {
+                $tempDir = $customLogsDir ?: __DIR__ . '/../logs';
+                if (!is_dir($tempDir)) {
+                    @mkdir($tempDir, 0777, true);
+                }
+            }
 
-        $downloadName = $filename ?: 'invoice-' . ($order['order_number'] ?? 'order') . '.pdf';
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: attachment; filename="' . basename($downloadName) . '"');
-        header('Access-Control-Expose-Headers: Content-Disposition');
-        header('Cache-Control: private, max-age=0, must-revalidate');
-        header('Pragma: public');
-        echo $dompdf->output();
-        exit;
+            $options = new \Dompdf\Options();
+            $options->set('isRemoteEnabled', true);
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('defaultFont', 'DejaVu Sans');
+            if ($tempDir && is_writable($tempDir)) {
+                $options->set('tempDir', $tempDir);
+                $options->set('fontDir', $tempDir);
+                $options->set('fontCache', $tempDir);
+            }
+            $rootDir = realpath(__DIR__ . '/..');
+            if ($rootDir) {
+                $options->set('chroot', [$rootDir, $tempDir]);
+            }
+
+            $dompdf = new \Dompdf\Dompdf($options);
+            $dompdf->loadHtml($html, 'UTF-8');
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+
+            $pdfContent = $dompdf->output();
+
+            if ($pdfContent && strlen($pdfContent) > 0) {
+                while (ob_get_level()) {
+                    @ob_end_clean();
+                }
+
+                $downloadName = $filename ?: 'invoice-' . ($orderNum ?: 'order') . '.pdf';
+                header('Content-Type: application/pdf');
+                header('Content-Disposition: attachment; filename="' . basename($downloadName) . '"');
+                header('Content-Length: ' . strlen($pdfContent));
+                header('Access-Control-Expose-Headers: Content-Disposition');
+                header('Cache-Control: private, max-age=0, must-revalidate');
+                header('Pragma: public');
+                echo $pdfContent;
+                exit;
+            }
+        } catch (\Throwable $e) {
+            error_log('Invoice PDF generation error via Dompdf: ' . $e->getMessage());
+        }
     }
 
-    $downloadName = $filename ?: 'invoice-' . ($order['order_number'] ?? 'order') . '.html';
+    // Fallback: Deliver a clean, styled, self-contained printable invoice document
+    while (ob_get_level()) {
+        @ob_end_clean();
+    }
+
+    $downloadName = $filename ? str_replace('.pdf', '.html', $filename) : 'invoice-' . ($orderNum ?: 'order') . '.html';
     header('Content-Type: text/html; charset=UTF-8');
-    header('Content-Disposition: attachment; filename="' . basename($downloadName) . '"');
+    header('Content-Disposition: inline; filename="' . basename($downloadName) . '"');
     header('Access-Control-Expose-Headers: Content-Disposition');
-    echo $html;
+    header('Cache-Control: private, max-age=0, must-revalidate');
+    header('Pragma: public');
+
+    // Add automatic print trigger for smooth fallback experience
+    $printableHtml = str_replace('</body>', '<script>window.addEventListener("DOMContentLoaded", function() { setTimeout(function(){ window.print(); }, 400); });</script></body>', $html);
+    echo $printableHtml;
     exit;
 }
+

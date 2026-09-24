@@ -131,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_laptop'])) {
                     mysqli_stmt_close($uIns);
                 }
 
-                $sqlIns = "INSERT INTO laptops (user_id, brand_id, type, model, processor, ram, storage, `condition`, price, description, image, quantity, status, approval_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', 'approved')";
+                $sqlIns = "INSERT INTO laptops (user_id, brand_id, type, model, processor, ram, storage, `condition`, price, description, image, quantity, stock_quantity, status, approval_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', 'approved')";
                 $ins = mysqli_prepare($conn, $sqlIns);
                 if ($ins === false) {
                     $err = mysqli_error($conn);
@@ -139,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_laptop'])) {
                     setFlash('error', 'Database error while creating listing.');
                 } else {
                     $priceVal = $price;
-                    mysqli_stmt_bind_param($ins, 'iissssssdssi', $uid, $brand_id, $type, $model, $processor, $ram, $storage, $condition, $priceVal, $description, $image_name, $quantity);
+                    mysqli_stmt_bind_param($ins, 'iissssssdssii', $uid, $brand_id, $type, $model, $processor, $ram, $storage, $condition, $priceVal, $description, $image_name, $quantity, $quantity);
                     if (mysqli_stmt_execute($ins)) {
                         setFlash('success', 'Laptop listing created and published successfully.');
                     } else {
@@ -195,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_laptop'])) {
             }
 
             if (!isset($_SESSION['flash_error'])) {
-                $sqlUp = "UPDATE laptops SET brand_id = ?, type = ?, model = ?, processor = ?, ram = ?, storage = ?, `condition` = ?, price = ?, description = ?, image = ?, quantity = ? WHERE id = ?";
+                $sqlUp = "UPDATE laptops SET brand_id = ?, type = ?, model = ?, processor = ?, ram = ?, storage = ?, `condition` = ?, price = ?, description = ?, image = ?, quantity = ?, stock_quantity = ? WHERE id = ?";
                 $up = mysqli_prepare($conn, $sqlUp);
                 if ($up === false) {
                     $err = mysqli_error($conn);
@@ -203,7 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_laptop'])) {
                     setFlash('error', 'Database error while updating listing.');
                 } else {
                     $priceVal = $price;
-                    mysqli_stmt_bind_param($up, 'issssssdssii', $brand_id, $type, $model, $processor, $ram, $storage, $condition, $priceVal, $description, $newImage, $quantity, $laptop_id);
+                    mysqli_stmt_bind_param($up, 'issssssdssiii', $brand_id, $type, $model, $processor, $ram, $storage, $condition, $priceVal, $description, $newImage, $quantity, $quantity, $laptop_id);
                     if (mysqli_stmt_execute($up)) {
                         if ($newImage !== $curImg && !empty($curImg)) {
                             deleteImageFile($curImg, LAPTOP_UPLOAD_DIR);

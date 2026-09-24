@@ -533,7 +533,8 @@ function ensureAuthSchema(PDO $pdo): void {
     }
 
     try {
-        $pdo->exec("UPDATE laptops SET stock_quantity = COALESCE(stock_quantity, quantity, 1) WHERE stock_quantity IS NULL OR stock_quantity < 1");
+        $pdo->exec("UPDATE laptops SET stock_quantity = quantity WHERE (stock_quantity IS NULL OR stock_quantity < 1 OR (stock_quantity = 1 AND quantity > 1))");
+        $pdo->exec("UPDATE laptops SET quantity = stock_quantity WHERE (quantity IS NULL OR quantity < 1)");
     } catch (Throwable $e) {
         error_log('Laptop stock quantity migration failed: ' . $e->getMessage());
     }

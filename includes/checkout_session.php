@@ -41,12 +41,14 @@ function initCheckoutSession(bool $forceReset = false) {
         $res = mysqli_stmt_get_result($stmt);
         if ($item = mysqli_fetch_assoc($res)) {
             if (!isOwnListing($userId, (int)$item['user_id'])) {
-                $availableStock = max(1, (int)($item['stock_quantity'] ?? $item['quantity'] ?? 1));
-                $item['selected_quantity'] = 1;
+                $stockVal = max((int)($item['quantity'] ?? 0), (int)($item['stock_quantity'] ?? 0));
+                $availableStock = max(1, $stockVal);
+                $initialQty = max(1, min($availableStock, (int)($_GET['quantity'] ?? 1)));
+                $item['selected_quantity'] = $initialQty;
                 $item['max_stock'] = $availableStock;
                 $item['available_stock'] = $availableStock;
                 $items[] = $item;
-                $total += (float)$item['price'];
+                $total += (float)$item['price'] * $initialQty;
             }
         }
         mysqli_stmt_close($stmt);
@@ -59,7 +61,8 @@ function initCheckoutSession(bool $forceReset = false) {
             if (isOwnListing($userId, (int)$item['user_id'])) {
                 continue;
             }
-            $availableStock = max(1, (int)($item['stock_quantity'] ?? $item['quantity'] ?? 1));
+            $stockVal = max((int)($item['quantity'] ?? 0), (int)($item['stock_quantity'] ?? 0));
+            $availableStock = max(1, $stockVal);
             $item['selected_quantity'] = 1;
             $item['max_stock'] = $availableStock;
             $item['available_stock'] = $availableStock;

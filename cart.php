@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 
     // Check laptop availability & approval status
-    $laptop_stmt = mysqli_prepare($conn, "SELECT user_id, status, approval_status, COALESCE(stock_quantity, quantity, 1) AS stock FROM laptops WHERE id = ?");
+    $laptop_stmt = mysqli_prepare($conn, "SELECT user_id, status, approval_status, quantity, stock_quantity FROM laptops WHERE id = ?");
     mysqli_stmt_bind_param($laptop_stmt, "i", $laptop_id);
     mysqli_stmt_execute($laptop_stmt);
     $laptop_row = mysqli_fetch_assoc(mysqli_stmt_get_result($laptop_stmt));
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit();
     }
 
-    $stock = (int)$laptop_row['stock'];
+    $stock = max((int)($laptop_row['quantity'] ?? 0), (int)($laptop_row['stock_quantity'] ?? 0));
     if ($stock <= 0 && $action !== 'remove') {
         echo json_encode(['status' => 'error', 'message' => 'This laptop is currently out of stock.']);
         exit();

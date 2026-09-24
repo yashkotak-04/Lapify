@@ -39,8 +39,8 @@ if ($isApplyPromo) {
     $subtotal = 0.0;
 
     foreach ($items as &$item) {
-        $id = (int)$item['id'];
-        $maxStock = max(1, (int)($item['stock_quantity'] ?? $item['quantity'] ?? $item['max_stock'] ?? $item['available_stock'] ?? 1));
+        $stockVal = max((int)($item['quantity'] ?? 0), (int)($item['stock_quantity'] ?? 0), (int)($item['max_stock'] ?? 0), (int)($item['available_stock'] ?? 0));
+        $maxStock = max(1, $stockVal);
         $item['max_stock'] = $maxStock;
         $item['available_stock'] = $maxStock;
         if (isset($quantities[$id])) {
@@ -137,8 +137,8 @@ if ($isProceed) {
         $subtotal = 0.0;
 
         foreach ($items as &$item) {
-            $id = (int)$item['id'];
-            $maxStock = max(1, (int)($item['stock_quantity'] ?? $item['quantity'] ?? $item['max_stock'] ?? $item['available_stock'] ?? 1));
+            $stockVal = max((int)($item['quantity'] ?? 0), (int)($item['stock_quantity'] ?? 0), (int)($item['max_stock'] ?? 0), (int)($item['available_stock'] ?? 0));
+            $maxStock = max(1, $stockVal);
             $item['max_stock'] = $maxStock;
             $item['available_stock'] = $maxStock;
 
@@ -219,7 +219,8 @@ require_once __DIR__ . '/includes/navbar.php';
                             <?php foreach ($items as $item): ?>
                             <?php
                                 $img = getLaptopImageUrl($item) ?: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80';
-                                $availableStock = max(1, (int)($item['stock_quantity'] ?? $item['quantity'] ?? $item['available_stock'] ?? 1));
+                                $stockVal = max((int)($item['quantity'] ?? 0), (int)($item['stock_quantity'] ?? 0), (int)($item['max_stock'] ?? 0), (int)($item['available_stock'] ?? 0));
+                                $availableStock = max(1, $stockVal);
                                 $maxStock = $availableStock;
                                 $qty = (int)($item['selected_quantity'] ?? 1);
                                 $displayTitle = escape($item['model']);

@@ -10,56 +10,81 @@ requireLogin();
 
 $conn = getDbConnection();
 $current_user = getCurrentUser();
-$user_id = $current_user['id'];
+$user_id = (int)($current_user['id'] ?? 0);
+$is_admin = isAdmin();
 
 $order_id = intval($_GET['order_id'] ?? $_GET['id'] ?? 0);
-if ($order_id <= 0) {
-    renderErrorPage(404, 'Invalid order reference', 'The order you requested could not be found.');
+$order_number = sanitizeInput($_GET['order_number'] ?? '');
+
+// Resolve order by id or order_number
+$order = null;
+if ($order_id > 0) {
+    if ($is_admin) {
+        $stmt = mysqli_prepare($conn, "SELECT * FROM orders WHERE id = ? LIMIT 1");
+        mysqli_stmt_bind_param($stmt, "i", $order_id);
+    } else {
+        $stmt = mysqli_prepare($conn, "SELECT * FROM orders WHERE id = ? AND user_id = ? LIMIT 1");
+        mysqli_stmt_bind_param($stmt, "ii", $order_id, $user_id);
+    }
+    mysqli_stmt_execute($stmt);
+    $order = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+    mysqli_stmt_close($stmt);
+} elseif ($order_number !== '') {
+    if ($is_admin) {
+        $stmt = mysqli_prepare($conn, "SELECT * FROM orders WHERE order_number = ? LIMIT 1");
+        mysqli_stmt_bind_param($stmt, "s", $order_number);
+    } else {
+        $stmt = mysqli_prepare($conn, "SELECT * FROM orders WHERE order_number = ? AND user_id = ? LIMIT 1");
+        mysqli_stmt_bind_param($stmt, "si", $order_number, $user_id);
+    }
+    mysqli_stmt_execute($stmt);
+    $order = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+    mysqli_stmt_close($stmt);
+}
+
+if (!$order) {
+    renderErrorPage(404, 'Order not found', 'The order you requested could not be found or you do not have access to view its invoice.');
+    exit();
+}
+
+$order_id = (int)$order['id'];
+
+// Fetch order items
+$item_stmt = mysqli_prepare($conn, "SELECT * FROM order_items WHERE order_id = ?");
+mysqli_stmt_bind_param($item_stmt, "i", $order_id);
+mysqli_stmt_execute($item_stmt);
+$order_items = mysqli_fetch_all(mysqli_stmt_get_result($item_stmt), MYSQLI_ASSOC);
+mysqli_stmt_close($item_stmt);
+
+// Fetch the actual customer info for the invoice
+$customer_data = $current_user;
+if ((int)$order['user_id'] !== $user_id) {
+    $cust_stmt = mysqli_prepare($conn, "SELECT id, full_name, email, phone FROM users WHERE id = ? LIMIT 1");
+    mysqli_stmt_bind_param($cust_stmt, "i", $order['user_id']);
+    mysqli_stmt_execute($cust_stmt);
+    $fetched_cust = mysqli_fetch_assoc(mysqli_stmt_get_result($cust_stmt));
+    if ($fetched_cust) {
+        $customer_data = $fetched_cust;
+    }
+    mysqli_stmt_close($cust_stmt);
 }
 
 // Handle PDF download FIRST, before any HTML/page output
 if (isset($_GET['download_pdf']) && $_GET['download_pdf'] === '1') {
     require_once __DIR__ . '/includes/invoice-pdf.php';
-    $download_stmt = mysqli_prepare($conn, "SELECT * FROM orders WHERE id = ? AND user_id = ?");
-    mysqli_stmt_bind_param($download_stmt, "ii", $order_id, $user_id);
-    mysqli_stmt_execute($download_stmt);
-    $download_order = mysqli_fetch_assoc(mysqli_stmt_get_result($download_stmt));
-    mysqli_stmt_close($download_stmt);
-
-    if ($download_order) {
-        $download_items_stmt = mysqli_prepare($conn, "SELECT * FROM order_items WHERE order_id = ?");
-        mysqli_stmt_bind_param($download_items_stmt, "i", $download_order['id']);
-        mysqli_stmt_execute($download_items_stmt);
-        $download_items = mysqli_fetch_all(mysqli_stmt_get_result($download_items_stmt), MYSQLI_ASSOC);
-        mysqli_stmt_close($download_items_stmt);
-
-        ob_end_clean();
-        generateInvoicePdf($download_order, $current_user, $download_items);
+    while (ob_get_level()) {
+        @ob_end_clean();
     }
-    exit; // safety: never fall through to page rendering
+    generateInvoicePdf($order, $customer_data, $order_items);
+    exit();
 }
 
 // Only now pull in the page chrome for the normal (non-download) view
 $page_title = "Order Invoice | Lapify";
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/navbar.php';
-
-$stmt = mysqli_prepare($conn, "SELECT * FROM orders WHERE id = ? AND user_id = ?");
-mysqli_stmt_bind_param($stmt, "ii", $order_id, $user_id);
-mysqli_stmt_execute($stmt);
-$order = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
-mysqli_stmt_close($stmt);
-
-if (!$order) {
-    renderErrorPage(404, 'Order not found', 'The order you requested could not be found or you do not have access to it.');
-}
-
-$item_stmt = mysqli_prepare($conn, "SELECT * FROM order_items WHERE order_id = ?");
-mysqli_stmt_bind_param($item_stmt, "i", $order_id);
-mysqli_stmt_execute($item_stmt);
-$order_items = mysqli_fetch_all(mysqli_stmt_get_result($item_stmt), MYSQLI_ASSOC);
-mysqli_stmt_close($item_stmt);
 ?>
+
 
 <div class="container py-5">
     <style>

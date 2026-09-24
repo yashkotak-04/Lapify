@@ -68,7 +68,7 @@ if ($isPaymentSubmit) {
                 $price = (float)$item['price'];
 
                 // Lock stock row
-                $stockStmt = mysqli_prepare($conn, "SELECT COALESCE(stock_quantity, quantity, 1) AS available_stock, user_id, status, approval_status FROM laptops WHERE id = ? FOR UPDATE");
+                $stockStmt = mysqli_prepare($conn, "SELECT GREATEST(COALESCE(stock_quantity, 0), COALESCE(quantity, 0), 1) AS available_stock, user_id, status, approval_status FROM laptops WHERE id = ? FOR UPDATE");
                 mysqli_stmt_bind_param($stockStmt, "i", $itemId);
                 mysqli_stmt_execute($stockStmt);
                 $stockRow = mysqli_fetch_assoc(mysqli_stmt_get_result($stockStmt));
