@@ -19,9 +19,8 @@
 -- Current Database: `lapify`
 --
 
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `lapify` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */;
-
-USE `lapify`;
+-- CREATE DATABASE IF NOT EXISTS `lapify` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- USE `lapify`;
 
 --
 -- Table structure for table `admins`
